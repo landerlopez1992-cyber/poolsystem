@@ -11,6 +11,9 @@ import '../../widgets/admin_sidebar.dart';
 import 'create_client_screen.dart';
 import 'create_worker_screen.dart';
 import 'create_admin_user_screen.dart';
+import 'edit_client_screen.dart';
+import 'edit_worker_screen.dart';
+import 'edit_admin_user_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   final int? initialIndex; // Índice inicial para la sección
@@ -207,10 +210,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         const Color(0xFFFF9800),
                       ),
                       _buildStatCard(
-                        'Rutas',
-                        _stats!['total_routes'].toString(),
-                        Icons.route,
-                        const Color(0xFF37474F),
+                        'Ingresos Mensuales',
+                        '\$${(_stats!['total_monthly_revenue'] ?? 0.0).toStringAsFixed(2)}',
+                        Icons.attach_money,
+                        const Color(0xFF4CAF50),
                       ),
                     ],
                   ),
@@ -432,42 +435,79 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ],
               ),
             )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _clients.length,
-              itemBuilder: (context, index) {
-                final client = _clients[index];
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  color: Colors.white,
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: const Color(0xFF4CAF50),
-                      child: Text(
-                        client.fullName[0].toUpperCase(),
-                        style: const TextStyle(color: Colors.white),
+          : Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 800),
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _clients.length,
+                  itemBuilder: (context, index) {
+                    final client = _clients[index];
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      color: Colors.white,
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: const Color(0xFF4CAF50),
+                          child: Text(
+                            client.fullName[0].toUpperCase(),
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                        title: Text(
+                          client.fullName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2C2C2C),
+                          ),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              client.phone ?? client.email ?? 'Sin contacto',
+                              style: const TextStyle(color: Color(0xFF666666)),
+                            ),
+                            if (client.monthlyFee != null && client.monthlyFee! > 0)
+                              Text(
+                                'Mensualidad: \$${client.monthlyFee!.toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  color: Color(0xFF4CAF50),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit, color: Color(0xFFFF9800)),
+                              onPressed: () async {
+                                final result = await Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => EditClientScreen(
+                                      client: client,
+                                      companyId: _companyId!,
+                                    ),
+                                  ),
+                                );
+                                if (result == true) {
+                                  _loadClients();
+                                  _loadStats();
+                                }
+                              },
+                            ),
+                            client.status == 'active'
+                                ? const Icon(Icons.check_circle, color: Color(0xFF4CAF50))
+                                : const Icon(Icons.cancel, color: Color(0xFFDC2626)),
+                          ],
+                        ),
                       ),
-                    ),
-                    title: Text(
-                      client.fullName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2C2C2C),
-                      ),
-                    ),
-                    subtitle: Text(
-                      client.phone ?? client.email ?? 'Sin contacto',
-                      style: const TextStyle(color: Color(0xFF666666)),
-                    ),
-                    trailing: client.status == 'active'
-                        ? const Icon(Icons.check_circle, color: Color(0xFF4CAF50))
-                        : const Icon(Icons.cancel, color: Color(0xFFDC2626)),
-                    onTap: () {
-                      // TODO: Ver detalles del cliente
-                    },
-                  ),
-                );
-              },
+                    );
+                  },
+                ),
+              ),
             ),
     );
   }
@@ -489,47 +529,78 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ],
               ),
             )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _workers.length,
-              itemBuilder: (context, index) {
-                final worker = _workers[index];
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  color: Colors.white,
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: const Color(0xFFFF9800),
-                      child: Text(
-                        worker.fullName[0].toUpperCase(),
-                        style: const TextStyle(color: Colors.white),
+          : Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 800),
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _workers.length,
+                  itemBuilder: (context, index) {
+                    final worker = _workers[index];
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      color: Colors.white,
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: const Color(0xFFFF9800),
+                          child: Text(
+                            worker.fullName[0].toUpperCase(),
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                        title: Text(
+                          worker.fullName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2C2C2C),
+                          ),
+                        ),
+                        subtitle: Text(
+                          worker.specialization ?? 'Sin especialización',
+                          style: const TextStyle(color: Color(0xFF666666)),
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit, color: Color(0xFFFF9800)),
+                              onPressed: () async {
+                                // Obtener el usuario asociado al worker
+                                UserModel? workerUser;
+                                try {
+                                  workerUser = await _userService.getUserById(worker.userId);
+                                } catch (e) {
+                                  // Si no se encuentra, continuar sin avatar
+                                }
+                                final result = await Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => EditWorkerScreen(
+                                      worker: worker,
+                                      workerUser: workerUser,
+                                    ),
+                                  ),
+                                );
+                                if (result == true) {
+                                  _loadWorkers();
+                                  _loadStats();
+                                }
+                              },
+                            ),
+                            Icon(
+                              worker.status == 'active'
+                                  ? Icons.check_circle
+                                  : Icons.cancel,
+                              color: worker.status == 'active'
+                                  ? const Color(0xFF4CAF50)
+                                  : const Color(0xFFDC2626),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    title: Text(
-                      worker.fullName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2C2C2C),
-                      ),
-                    ),
-                    subtitle: Text(
-                      worker.specialization ?? 'Sin especialización',
-                      style: const TextStyle(color: Color(0xFF666666)),
-                    ),
-                    trailing: Icon(
-                      worker.status == 'active'
-                          ? Icons.check_circle
-                          : Icons.cancel,
-                      color: worker.status == 'active'
-                          ? const Color(0xFF4CAF50)
-                          : const Color(0xFFDC2626),
-                    ),
-                    onTap: () {
-                      // TODO: Ver detalles del trabajador
-                    },
-                  ),
-                );
-              },
+                    );
+                  },
+                ),
+              ),
             ),
     );
   }
@@ -552,39 +623,62 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ],
               ),
             )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _adminUsers.length,
-              itemBuilder: (context, index) {
-                final user = _adminUsers[index];
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  color: Colors.white,
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: const Color(0xFF37474F),
-                      child: Text(
-                        (user.fullName ?? user.email)[0].toUpperCase(),
-                        style: const TextStyle(color: Colors.white),
+          : Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 800),
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _adminUsers.length,
+                  itemBuilder: (context, index) {
+                    final user = _adminUsers[index];
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      color: Colors.white,
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: const Color(0xFF37474F),
+                          child: Text(
+                            (user.fullName ?? user.email)[0].toUpperCase(),
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                        title: Text(
+                          user.fullName ?? user.email,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2C2C2C),
+                          ),
+                        ),
+                        subtitle: Text(
+                          user.email,
+                          style: const TextStyle(color: Color(0xFF666666)),
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit, color: Color(0xFFFF9800)),
+                              onPressed: () async {
+                                final result = await Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => EditAdminUserScreen(user: user),
+                                  ),
+                                );
+                                if (result == true) {
+                                  _loadAdminUsers();
+                                }
+                              },
+                            ),
+                            user.isActive
+                                ? const Icon(Icons.check_circle, color: Color(0xFF4CAF50))
+                                : const Icon(Icons.cancel, color: Color(0xFFDC2626)),
+                          ],
+                        ),
                       ),
-                    ),
-                    title: Text(
-                      user.fullName ?? user.email,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2C2C2C),
-                      ),
-                    ),
-                    subtitle: Text(
-                      user.email,
-                      style: const TextStyle(color: Color(0xFF666666)),
-                    ),
-                    trailing: user.isActive
-                        ? const Icon(Icons.check_circle, color: Color(0xFF4CAF50))
-                        : const Icon(Icons.cancel, color: Color(0xFFDC2626)),
-                  ),
-                );
-              },
+                    );
+                  },
+                ),
+              ),
             ),
     );
   }

@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import '../../services/client_service.dart';
+import '../../models/client_model.dart';
 import '../../widgets/admin_layout.dart';
 
-class CreateClientScreen extends StatefulWidget {
+class EditClientScreen extends StatefulWidget {
+  final ClientModel client;
   final String companyId;
 
-  const CreateClientScreen({super.key, required this.companyId});
+  const EditClientScreen({super.key, required this.client, required this.companyId});
 
   @override
-  State<CreateClientScreen> createState() => _CreateClientScreenState();
+  State<EditClientScreen> createState() => _EditClientScreenState();
 }
 
-class _CreateClientScreenState extends State<CreateClientScreen> {
+class _EditClientScreenState extends State<EditClientScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -23,6 +25,21 @@ class _CreateClientScreenState extends State<CreateClientScreen> {
   final _monthlyFeeController = TextEditingController();
   final _clientService = ClientService();
   bool _isLoading = false;
+  String _status = 'active';
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController.text = widget.client.fullName;
+    _emailController.text = widget.client.email ?? '';
+    _phoneController.text = widget.client.phone ?? '';
+    _addressController.text = widget.client.address ?? '';
+    _poolTypeController.text = widget.client.poolType ?? '';
+    _poolSizeController.text = widget.client.poolSize ?? '';
+    _notesController.text = widget.client.notes ?? '';
+    _monthlyFeeController.text = widget.client.monthlyFee?.toStringAsFixed(2) ?? '';
+    _status = widget.client.status;
+  }
 
   @override
   void dispose() {
@@ -47,8 +64,12 @@ class _CreateClientScreenState extends State<CreateClientScreen> {
     });
 
     try {
-      await _clientService.createClient(
-        companyId: widget.companyId,
+      final monthlyFee = _monthlyFeeController.text.trim().isEmpty
+          ? null
+          : double.tryParse(_monthlyFeeController.text.trim());
+
+      await _clientService.updateClient(
+        clientId: widget.client.id,
         fullName: _nameController.text.trim(),
         email: _emailController.text.trim().isEmpty
             ? null
@@ -68,14 +89,13 @@ class _CreateClientScreenState extends State<CreateClientScreen> {
         notes: _notesController.text.trim().isEmpty
             ? null
             : _notesController.text.trim(),
-        monthlyFee: _monthlyFeeController.text.trim().isEmpty
-            ? null
-            : double.tryParse(_monthlyFeeController.text.trim()),
+        monthlyFee: monthlyFee,
+        status: _status,
       );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Cliente creado exitosamente')),
+          const SnackBar(content: Text('Cliente actualizado exitosamente')),
         );
         Navigator.of(context).pop(true);
       }
@@ -95,7 +115,6 @@ class _CreateClientScreenState extends State<CreateClientScreen> {
   }
 
   void _handleSidebarNavigation(int index) {
-    // Navegar al dashboard con el índice correcto
     Navigator.of(context).pushNamedAndRemoveUntil(
       '/admin',
       (route) => false,
@@ -105,11 +124,10 @@ class _CreateClientScreenState extends State<CreateClientScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Ancho máximo para el formulario (responsive)
     final maxWidth = MediaQuery.of(context).size.width > 600 ? 500.0 : double.infinity;
     
     return AdminLayout(
-      title: 'Crear Cliente',
+      title: 'Editar Cliente',
       selectedIndex: 1, // Clientes
       onItemSelected: _handleSidebarNavigation,
       child: Center(
@@ -234,6 +252,34 @@ class _CreateClientScreenState extends State<CreateClientScreen> {
                               maxLines: 3,
                             ),
                           ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            child: DropdownButtonFormField<String>(
+                              value: _status,
+                              decoration: const InputDecoration(
+                                labelText: 'Estado *',
+                                border: OutlineInputBorder(),
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'active',
+                                  child: Text('Activo'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'inactive',
+                                  child: Text('Inactivo'),
+                                ),
+                              ],
+                              onChanged: (value) {
+                                if (value != null) {
+                                  setState(() {
+                                    _status = value;
+                                  });
+                                }
+                              },
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -261,7 +307,7 @@ class _CreateClientScreenState extends State<CreateClientScreen> {
                               ),
                             )
                           : const Text(
-                              'Crear Cliente',
+                              'Guardar Cambios',
                               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                             ),
                     ),
@@ -275,3 +321,4 @@ class _CreateClientScreenState extends State<CreateClientScreen> {
     );
   }
 }
+

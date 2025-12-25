@@ -260,7 +260,7 @@ class CompanyService {
 
       final clientsResponse = await _supabase
           .from('clients')
-          .select('id')
+          .select('id, monthly_fee, status')
           .eq('company_id', companyId);
 
       final routesResponse = await _supabase
@@ -268,10 +268,19 @@ class CompanyService {
           .select('id')
           .eq('company_id', companyId);
 
+      // Calcular total de ingresos mensuales (solo clientes activos)
+      double totalMonthlyRevenue = 0.0;
+      for (var client in clientsResponse) {
+        if (client['status'] == 'active' && client['monthly_fee'] != null) {
+          totalMonthlyRevenue += (client['monthly_fee'] as num).toDouble();
+        }
+      }
+
       return {
         'total_workers': (workersResponse as List).length,
         'total_clients': (clientsResponse as List).length,
         'total_routes': (routesResponse as List).length,
+        'total_monthly_revenue': totalMonthlyRevenue,
       };
     } catch (e) {
       throw Exception('Error al obtener estadísticas: $e');

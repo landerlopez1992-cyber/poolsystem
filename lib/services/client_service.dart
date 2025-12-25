@@ -48,6 +48,7 @@ class ClientService {
     String? poolType,
     String? poolSize,
     String? notes,
+    double? monthlyFee,
   }) async {
     try {
       final response = await _supabase
@@ -63,6 +64,7 @@ class ClientService {
             'pool_type': poolType,
             'pool_size': poolSize,
             'notes': notes,
+            'monthly_fee': monthlyFee,
             'status': 'active',
           })
           .select()
@@ -86,6 +88,7 @@ class ClientService {
     String? poolType,
     String? poolSize,
     String? notes,
+    double? monthlyFee,
     String? status,
   }) async {
     try {
@@ -99,6 +102,7 @@ class ClientService {
       if (poolType != null) data['pool_type'] = poolType;
       if (poolSize != null) data['pool_size'] = poolSize;
       if (notes != null) data['notes'] = notes;
+      if (monthlyFee != null) data['monthly_fee'] = monthlyFee;
       if (status != null) data['status'] = status;
 
       final response = await _supabase

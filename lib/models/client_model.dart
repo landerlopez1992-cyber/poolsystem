@@ -10,6 +10,7 @@ class ClientModel {
   final String? poolType; // residential, commercial, etc.
   final String? poolSize;
   final String? notes;
+  final double? monthlyFee; // Mensualidad que paga el cliente
   final DateTime createdAt;
   final DateTime updatedAt;
   final String status; // active, inactive
@@ -26,6 +27,7 @@ class ClientModel {
     this.poolType,
     this.poolSize,
     this.notes,
+    this.monthlyFee,
     required this.createdAt,
     required this.updatedAt,
     this.status = 'active',
@@ -44,6 +46,7 @@ class ClientModel {
       poolType: json['pool_type'] as String?,
       poolSize: json['pool_size'] as String?,
       notes: json['notes'] as String?,
+      monthlyFee: json['monthly_fee'] != null ? (json['monthly_fee'] as num).toDouble() : null,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
       status: json['status'] as String? ?? 'active',
@@ -63,6 +66,7 @@ class ClientModel {
       'pool_type': poolType,
       'pool_size': poolSize,
       'notes': notes,
+      'monthly_fee': monthlyFee,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
       'status': status,
