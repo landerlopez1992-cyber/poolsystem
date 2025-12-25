@@ -124,21 +124,29 @@ class UserService {
       print('📝 Datos a actualizar: $data');
 
       // Verificar que el usuario existe antes de actualizar
-      Map<String, dynamic>? existingUserData = await _supabase
-          .from('users')
-          .select('id, email, role, company_id')
-          .eq('id', userId)
-          .maybeSingle();
-      
-      UserModel? existingUser = existingUserData != null 
-          ? UserModel.fromJson(existingUserData) 
-          : null;
+      // Intentar leer el usuario (puede fallar por RLS si no tiene permisos)
+      UserModel? existingUser;
+      try {
+        final existingUserData = await _supabase
+            .from('users')
+            .select('id, email, role, company_id')
+            .eq('id', userId)
+            .maybeSingle();
+        
+        if (existingUserData != null) {
+          existingUser = UserModel.fromJson(existingUserData);
+          print('🔍 Usuario existente en public.users: SÍ');
+          print('   - Email: ${existingUser.email}');
+          print('   - Role: ${existingUser.role}');
+        }
+      } catch (readError) {
+        print('⚠️ No se pudo leer usuario (puede ser por RLS): $readError');
+        // Continuar para intentar UPDATE directamente o crear el usuario
+      }
 
-      print('🔍 Usuario existente en public.users: ${existingUser != null ? "SÍ" : "NO"}');
-      
-      // Si el usuario no existe en public.users, verificar si existe en workers y crearlo
+      // Si el usuario no se pudo leer, verificar si existe en workers y crear/actualizar
       if (existingUser == null) {
-        print('⚠️ Usuario no encontrado en public.users, buscando en workers...');
+        print('⚠️ Usuario no encontrado o no accesible, buscando en workers...');
         
         try {
           // Buscar en workers para obtener información del usuario
@@ -149,15 +157,32 @@ class UserService {
               .maybeSingle();
           
           if (workerData != null) {
-            print('✅ Worker encontrado, creando usuario en public.users...');
+            print('✅ Worker encontrado, intentando crear/actualizar usuario en public.users...');
             print('   - Email del worker: ${workerData['email']}');
             print('   - Company ID: ${workerData['company_id']}');
             
+            // Intentar UPDATE primero (el usuario puede existir pero no ser accesible por RLS)
             try {
-              // Intentar crear el usuario usando la función de base de datos (si existe)
-              // o directamente con INSERT
+              print('🔄 Intentando UPDATE directo (el usuario puede existir)...');
+              final updateResult = await _supabase
+                  .from('users')
+                  .update({
+                    'avatar_url': avatarUrl,
+                    if (fullName != null) 'full_name': fullName,
+                    if (phone != null) 'phone': phone,
+                    if (isActive != null) 'is_active': isActive,
+                  })
+                  .eq('id', userId)
+                  .select()
+                  .single();
+              
+              print('✅ Usuario actualizado exitosamente (ya existía)');
+              return UserModel.fromJson(updateResult);
+            } catch (updateError) {
+              print('⚠️ UPDATE falló, intentando crear usuario: $updateError');
+              
+              // Si UPDATE falla, intentar crear con la función
               try {
-                // Primero intentar con la función create_user_for_worker (más seguro)
                 final functionResult = await _supabase.rpc(
                   'create_user_for_worker',
                   params: {
@@ -172,45 +197,42 @@ class UserService {
                 
                 if (functionResult != null) {
                   print('✅ Usuario creado usando función create_user_for_worker');
-                  existingUser = UserModel.fromJson(functionResult as Map<String, dynamic>);
+                  return UserModel.fromJson(functionResult as Map<String, dynamic>);
                 }
               } catch (functionError) {
-                print('⚠️ Función no disponible, intentando INSERT directo: $functionError');
-                
-                // Si la función no existe, intentar INSERT directo
-                final newUserData = await _supabase
-                    .from('users')
-                    .insert({
-                      'id': userId,
-                      'email': workerData['email'] ?? '',
-                      'full_name': workerData['full_name'] ?? fullName ?? '',
-                      'role': 'worker',
-                      'company_id': workerData['company_id'],
-                      'phone': phone,
-                      'avatar_url': avatarUrl,
-                      'is_active': isActive ?? true,
-                    })
-                    .select()
-                    .single();
-                
-                print('✅ Usuario creado exitosamente en public.users');
-                existingUser = UserModel.fromJson(newUserData);
+                print('❌ Error al crear usuario con función: $functionError');
+                // Si la función no existe o falla, intentar INSERT directo como último recurso
+                try {
+                  final newUserData = await _supabase
+                      .from('users')
+                      .insert({
+                        'id': userId,
+                        'email': workerData['email'] ?? '',
+                        'full_name': workerData['full_name'] ?? fullName ?? '',
+                        'role': 'worker',
+                        'company_id': workerData['company_id'],
+                        'phone': phone,
+                        'avatar_url': avatarUrl,
+                        'is_active': isActive ?? true,
+                      })
+                      .select()
+                      .single();
+                  
+                  print('✅ Usuario creado exitosamente en public.users');
+                  return UserModel.fromJson(newUserData);
+                } catch (insertError) {
+                  print('❌ Error al INSERTAR usuario: $insertError');
+                  throw Exception('No se pudo crear ni actualizar el usuario. Por favor, ejecuta el script SQL: database/SOLUCION_DEFINITIVA_RLS_INSERT_SIMPLE.sql');
+                }
               }
-            } catch (insertError) {
-              print('❌ Error al INSERTAR usuario: $insertError');
-              // Si falla por RLS, mostrar mensaje claro
-              throw Exception('No se pudo crear el usuario en la base de datos. Error RLS: $insertError. Por favor, ejecuta el script SQL: database/SOLUCION_DEFINITIVA_RLS_INSERT.sql');
             }
           } else {
             throw Exception('Usuario no encontrado en la base de datos ni en workers. userId: $userId');
           }
         } catch (e) {
-          print('❌ Error al crear usuario: $e');
+          print('❌ Error al crear/actualizar usuario: $e');
           throw Exception('Usuario no encontrado en la base de datos. userId: $userId. Error: $e');
         }
-      } else {
-        print('   - Email: ${existingUser!.email}');
-        print('   - Role: ${existingUser.role}');
       }
 
       print('💾 Ejecutando UPDATE en tabla users...');
