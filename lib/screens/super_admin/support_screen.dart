@@ -230,25 +230,29 @@ class _SupportScreenState extends State<SupportScreen> {
   }
 
   Widget _buildTicketCard(TicketModel ticket) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      color: Colors.white,
-      child: InkWell(
-        onTap: () async {
-          final result = await Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => TicketDetailScreen(ticket: ticket),
-            ),
-          );
-          if (result == true) {
-            _loadData();
-          }
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 800),
+        child: Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          color: Colors.white,
+          child: InkWell(
+            onTap: () async {
+              final result = await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => TicketDetailScreen(ticket: ticket),
+                ),
+              );
+              if (result == true) {
+                _loadData();
+              }
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
               Row(
                 children: [
                   Expanded(
