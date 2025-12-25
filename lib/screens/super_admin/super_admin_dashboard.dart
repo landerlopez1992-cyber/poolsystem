@@ -452,7 +452,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
           ),
         ],
       ),
-      floatingActionButton: (_selectedIndex == 0 || _selectedIndex == 1)
+      floatingActionButton: _selectedIndex == 1
           ? FloatingActionButton(
               onPressed: () async {
                 final result = await Navigator.of(context).push(

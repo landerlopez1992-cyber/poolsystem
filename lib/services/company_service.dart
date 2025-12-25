@@ -63,6 +63,58 @@ class CompanyService {
     }
   }
 
+  // Crear empresa con usuario administrador
+  Future<CompanyModel> createCompanyWithAdmin({
+    required String name,
+    String? description,
+    String? address,
+    String? phone,
+    String? email,
+    String? adminEmail,
+    required String adminPassword,
+  }) async {
+    try {
+      // 1. Crear la empresa
+      final company = await createCompany(
+        name: name,
+        description: description,
+        address: address,
+        phone: phone,
+        email: email,
+      );
+
+      // 2. Si hay email de admin, crear el usuario administrador
+      if (adminEmail != null && adminEmail.isNotEmpty) {
+        // Crear usuario en auth
+        final authResponse = await _supabase.auth.signUp(
+          email: adminEmail,
+          password: adminPassword,
+        );
+
+        if (authResponse.user == null) {
+          throw Exception('Error al crear usuario administrador');
+        }
+
+        final userId = authResponse.user!.id;
+
+        // Crear registro en tabla users
+        await _supabase.from('users').insert({
+          'id': userId,
+          'email': adminEmail,
+          'full_name': name, // Usar el nombre de la empresa como nombre del admin
+          'role': 'admin',
+          'company_id': company.id,
+          'phone': phone,
+          'is_active': true,
+        });
+      }
+
+      return company;
+    } catch (e) {
+      throw Exception('Error al crear empresa con administrador: $e');
+    }
+  }
+
   // Actualizar empresa
   Future<CompanyModel> updateCompany({
     required String companyId,

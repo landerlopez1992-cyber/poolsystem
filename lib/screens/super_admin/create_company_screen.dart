@@ -18,8 +18,10 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
   final _addressController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   final _companyService = CompanyService();
   bool _isLoading = false;
+  bool _obscurePassword = true;
 
   @override
   void initState() {
@@ -40,6 +42,7 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
     _addressController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -54,8 +57,8 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
 
     try {
       if (widget.company == null) {
-        // Crear nueva empresa
-        await _companyService.createCompany(
+        // Crear nueva empresa con usuario admin
+        await _companyService.createCompanyWithAdmin(
           name: _nameController.text.trim(),
           description: _descriptionController.text.trim().isEmpty
               ? null
@@ -69,6 +72,10 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
           email: _emailController.text.trim().isEmpty
               ? null
               : _emailController.text.trim(),
+          adminEmail: _emailController.text.trim().isEmpty
+              ? null
+              : _emailController.text.trim(),
+          adminPassword: _passwordController.text,
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -211,12 +218,21 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
                             child: TextFormField(
                               controller: _emailController,
                               decoration: const InputDecoration(
-                                labelText: 'Email',
+                                labelText: 'Email *',
                                 border: OutlineInputBorder(),
+                                hintText: 'Email del administrador de la empresa',
                               ),
                               keyboardType: TextInputType.emailAddress,
+                              enabled: widget.company == null, // Solo editable al crear
                               validator: (value) {
-                                if (value != null &&
+                                if (widget.company == null) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'El email es requerido';
+                                  }
+                                  if (!value.contains('@')) {
+                                    return 'Email inválido';
+                                  }
+                                } else if (value != null &&
                                     value.isNotEmpty &&
                                     !value.contains('@')) {
                                   return 'Email inválido';
@@ -225,6 +241,46 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
                               },
                             ),
                           ),
+                          // Solo mostrar campo de contraseña al crear nueva empresa
+                          if (widget.company == null) ...[
+                            const SizedBox(height: 16),
+                            // Contraseña - NO estirado, ancho controlado
+                            SizedBox(
+                              width: double.infinity,
+                              child: TextFormField(
+                                controller: _passwordController,
+                                obscureText: _obscurePassword,
+                                decoration: InputDecoration(
+                                  labelText: 'Contraseña del Administrador *',
+                                  border: const OutlineInputBorder(),
+                                  hintText: 'Contraseña para el usuario admin',
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _obscurePassword
+                                          ? Icons.visibility
+                                          : Icons.visibility_off,
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        _obscurePassword = !_obscurePassword;
+                                      });
+                                    },
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (widget.company == null) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'La contraseña es requerida';
+                                    }
+                                    if (value.length < 6) {
+                                      return 'La contraseña debe tener al menos 6 caracteres';
+                                    }
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
