@@ -625,12 +625,14 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
         leading: CircleAvatar(
           backgroundColor: const Color(0xFF37474F),
           child: Text(
-            user.fullName[0].toUpperCase(),
+            (user.fullName?.isNotEmpty ?? false)
+                ? user.fullName![0].toUpperCase()
+                : user.email[0].toUpperCase(),
             style: const TextStyle(color: Colors.white),
           ),
         ),
         title: Text(
-          user.fullName,
+          user.fullName ?? user.email,
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             color: Color(0xFF2C2C2C),
@@ -640,7 +642,8 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(user.email),
-            if (user.phone != null) Text(user.phone!),
+            if (user.phone != null && user.phone!.isNotEmpty)
+              Text(user.phone!),
           ],
         ),
         trailing: Row(
@@ -690,9 +693,10 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(worker.email),
-            if (worker.phone != null) Text(worker.phone!),
-            if (worker.specialization != null)
+            Text(worker.email ?? 'Sin email'),
+            if (worker.phone != null && worker.phone!.isNotEmpty)
+              Text(worker.phone!),
+            if (worker.specialization != null && worker.specialization!.isNotEmpty)
               Text(
                 'Especialización: ${worker.specialization}',
                 style: TextStyle(
