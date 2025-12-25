@@ -132,15 +132,11 @@ class UserService {
 
       print('🔍 Usuario existente en public.users: ${existingUser != null ? "SÍ" : "NO"}');
       
-      // Si el usuario no existe en public.users, verificar si existe en auth.users y crearlo
+      // Si el usuario no existe en public.users, verificar si existe en workers y crearlo
       if (existingUser == null) {
-        print('⚠️ Usuario no encontrado en public.users, verificando auth.users...');
+        print('⚠️ Usuario no encontrado en public.users, buscando en workers...');
         
         try {
-          // Intentar obtener el usuario de auth.users
-          final authUser = _supabase.auth.admin.getUserById(userId);
-          // Nota: admin.getUserById requiere permisos de servicio, así que usaremos otro método
-          
           // Buscar en workers para obtener información del usuario
           final workerData = await _supabase
               .from('workers')
