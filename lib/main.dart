@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'services/supabase_service.dart';
 import 'screens/auth/login_screen.dart';
+import 'screens/super_admin/super_admin_dashboard.dart';
+import 'screens/admin/admin_dashboard.dart';
+import 'screens/worker/worker_dashboard.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,7 +26,13 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      home: const LoginScreen(),
+      initialRoute: '/login',
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/super-admin': (context) => const SuperAdminDashboard(),
+        '/admin': (context) => const AdminDashboard(),
+        '/worker': (context) => const WorkerDashboard(),
+      },
     );
   }
 }

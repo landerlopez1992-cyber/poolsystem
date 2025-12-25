@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
-import '../super_admin/super_admin_dashboard.dart';
-import '../admin/admin_dashboard.dart';
-import '../worker/worker_dashboard.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -44,16 +41,19 @@ class _LoginScreenState extends State<LoginScreen> {
       if (user != null && mounted) {
         // Navegar según el rol
         if (user.isSuperAdmin) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const SuperAdminDashboard()),
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            '/super-admin',
+            (route) => false,
           );
         } else if (user.isAdmin) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const AdminDashboard()),
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            '/admin',
+            (route) => false,
           );
         } else if (user.isWorker) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const WorkerDashboard()),
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            '/worker',
+            (route) => false,
           );
         }
       } else {

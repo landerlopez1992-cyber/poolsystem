@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../models/company_model.dart';
-import '../../services/supabase_service.dart';
+import '../../services/company_service.dart';
+import '../../services/auth_service.dart';
+import 'create_company_screen.dart';
+import 'company_detail_screen.dart';
 
 class SuperAdminDashboard extends StatefulWidget {
   const SuperAdminDashboard({super.key});
@@ -10,7 +13,8 @@ class SuperAdminDashboard extends StatefulWidget {
 }
 
 class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
-  final _supabase = SupabaseService.client;
+  final _companyService = CompanyService();
+  final _authService = AuthService();
   List<CompanyModel> _companies = [];
   bool _isLoading = true;
 
@@ -22,15 +26,9 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
 
   Future<void> _loadCompanies() async {
     try {
-      final response = await _supabase
-          .from('companies')
-          .select()
-          .order('created_at', ascending: false);
-
+      final companies = await _companyService.getAllCompanies();
       setState(() {
-        _companies = (response as List)
-            .map((json) => CompanyModel.fromJson(json))
-            .toList();
+        _companies = companies;
         _isLoading = false;
       });
     } catch (e) {
@@ -40,6 +38,46 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al cargar empresas: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _toggleCompanyStatus(CompanyModel company) async {
+    try {
+      await _companyService.toggleCompanyStatus(company.id, !company.isActive);
+      await _loadCompanies();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(company.isActive
+                ? 'Empresa suspendida'
+                : 'Empresa activada'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _logout() async {
+    try {
+      await _authService.signOut();
+      if (mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          '/login',
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al cerrar sesión: $e')),
         );
       }
     }
@@ -60,9 +98,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
           ),
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () async {
-              // TODO: Implementar logout
-            },
+            onPressed: _logout,
           ),
         ],
       ),
@@ -120,11 +156,94 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                                 color: Color(0xFF666666),
                               ),
                             ),
-                            trailing: company.isActive
-                                ? const Icon(Icons.check_circle, color: Color(0xFF4CAF50))
-                                : const Icon(Icons.cancel, color: Color(0xFFDC2626)),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  company.isActive
+                                      ? Icons.check_circle
+                                      : Icons.cancel,
+                                  color: company.isActive
+                                      ? const Color(0xFF4CAF50)
+                                      : const Color(0xFFDC2626),
+                                ),
+                                const SizedBox(width: 8),
+                                PopupMenuButton(
+                                  itemBuilder: (context) => [
+                                    PopupMenuItem(
+                                      child: const Row(
+                                        children: [
+                                          Icon(Icons.edit, size: 20),
+                                          SizedBox(width: 8),
+                                          Text('Editar'),
+                                        ],
+                                      ),
+                                      onTap: () async {
+                                        await Future.delayed(
+                                            const Duration(milliseconds: 100));
+                                        if (mounted) {
+                                          final result =
+                                              await Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  CreateCompanyScreen(
+                                                      company: company),
+                                            ),
+                                          );
+                                          if (result == true) {
+                                            _loadCompanies();
+                                          }
+                                        }
+                                      },
+                                    ),
+                                    PopupMenuItem(
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            company.isActive
+                                                ? Icons.block
+                                                : Icons.check_circle,
+                                            size: 20,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(company.isActive
+                                              ? 'Suspender'
+                                              : 'Activar'),
+                                        ],
+                                      ),
+                                      onTap: () {
+                                        _toggleCompanyStatus(company);
+                                      },
+                                    ),
+                                    const PopupMenuItem(
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.visibility, size: 20),
+                                          SizedBox(width: 8),
+                                          Text('Ver Detalles'),
+                                        ],
+                                      ),
+                                    ),
+                                    const PopupMenuItem(
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.notifications, size: 20),
+                                          SizedBox(width: 8),
+                                          Text('Enviar Push'),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                             onTap: () {
-                              // TODO: Navegar a detalles de empresa
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      CompanyDetailScreen(company: company),
+                                ),
+                              );
                             },
                           ),
                         );
@@ -132,8 +251,15 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                     ),
             ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: Agregar nueva empresa
+        onPressed: () async {
+          final result = await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const CreateCompanyScreen(),
+            ),
+          );
+          if (result == true) {
+            _loadCompanies();
+          }
         },
         backgroundColor: const Color(0xFFFF9800),
         child: const Icon(Icons.add, color: Colors.white),
