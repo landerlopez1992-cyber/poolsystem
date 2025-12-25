@@ -124,11 +124,15 @@ class UserService {
       print('📝 Datos a actualizar: $data');
 
       // Verificar que el usuario existe antes de actualizar
-      var existingUser = await _supabase
+      Map<String, dynamic>? existingUserData = await _supabase
           .from('users')
           .select('id, email, role, company_id')
           .eq('id', userId)
           .maybeSingle();
+      
+      UserModel? existingUser = existingUserData != null 
+          ? UserModel.fromJson(existingUserData) 
+          : null;
 
       print('🔍 Usuario existente en public.users: ${existingUser != null ? "SÍ" : "NO"}');
       
