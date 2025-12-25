@@ -189,6 +189,20 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     }
   }
 
+  void _handleSidebarNavigation(int index) {
+    // Si se hace clic en Soporte (index 2), solo volver atrás
+    if (index == 2) {
+      Navigator.of(context).pop();
+      return;
+    }
+    
+    // Para otros índices, navegar al dashboard y cambiar de sección
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      '/super-admin',
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final maxWidth = MediaQuery.of(context).size.width > 800 ? 800.0 : double.infinity;
@@ -196,10 +210,10 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     return SuperAdminLayout(
       title: 'Detalle del Ticket',
       selectedIndex: 2, // Soporte
-      onItemSelected: (_) {},
-      child: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+      onItemSelected: _handleSidebarNavigation,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Center(
           child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: maxWidth),
             child: Column(
