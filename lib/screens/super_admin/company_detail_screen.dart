@@ -9,6 +9,8 @@ import '../../widgets/super_admin_layout.dart';
 import 'create_company_screen.dart';
 import '../admin/create_admin_user_screen.dart';
 import '../admin/create_worker_screen.dart';
+import 'edit_employee_screen.dart';
+import 'edit_worker_screen.dart';
 
 class CompanyDetailScreen extends StatefulWidget {
   final CompanyModel company;
@@ -306,7 +308,7 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
                         ),
                       )
                     else
-                      ..._adminUsers.map((user) => _buildEmployeeCard(user)),
+                      _buildEmployeesTable(),
                   ],
                 ),
               ),
@@ -378,7 +380,7 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
                         ),
                       )
                     else
-                      ..._workers.map((worker) => _buildWorkerCard(worker)),
+                      _buildWorkersTable(),
                   ],
                 ),
               ),
@@ -630,142 +632,176 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
     );
   }
 
-  Widget _buildEmployeeCard(UserModel user) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      color: Colors.grey[50],
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: const Color(0xFF37474F),
-          backgroundImage: user.avatarUrl != null
-              ? NetworkImage(user.avatarUrl!)
-              : null,
-          child: user.avatarUrl == null
-              ? Text(
-                  (user.fullName?.isNotEmpty ?? false)
-                      ? user.fullName![0].toUpperCase()
-                      : user.email[0].toUpperCase(),
-                  style: const TextStyle(color: Colors.white),
-                )
-              : null,
-        ),
-        title: Text(
-          user.fullName ?? user.email,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF2C2C2C),
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(user.email),
-            if (user.phone != null && user.phone!.isNotEmpty)
-              Text(user.phone!),
-          ],
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: user.isActive
-                    ? const Color(0xFF4CAF50).withOpacity(0.1)
-                    : const Color(0xFFDC2626).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                user.isActive ? 'Activo' : 'Inactivo',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: user.isActive
-                      ? const Color(0xFF4CAF50)
-                      : const Color(0xFFDC2626),
-                  fontWeight: FontWeight.bold,
+  Widget _buildEmployeesTable() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: DataTable(
+        headingRowColor: MaterialStateProperty.all(Colors.grey[100]),
+        columns: const [
+          DataColumn(label: Text('Foto')),
+          DataColumn(label: Text('Nombre')),
+          DataColumn(label: Text('Email')),
+          DataColumn(label: Text('Teléfono')),
+          DataColumn(label: Text('Estado')),
+          DataColumn(label: Text('Acciones')),
+        ],
+        rows: _adminUsers.map((user) {
+          return DataRow(
+            cells: [
+              DataCell(
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: const Color(0xFF37474F),
+                  backgroundImage: user.avatarUrl != null && user.avatarUrl!.isNotEmpty
+                      ? NetworkImage(user.avatarUrl!)
+                      : null,
+                  child: user.avatarUrl == null || user.avatarUrl!.isEmpty
+                      ? Text(
+                          (user.fullName?.isNotEmpty ?? false)
+                              ? user.fullName![0].toUpperCase()
+                              : user.email[0].toUpperCase(),
+                          style: const TextStyle(color: Colors.white, fontSize: 12),
+                        )
+                      : null,
                 ),
               ),
-            ),
-          ],
-        ),
+              DataCell(Text(user.fullName ?? 'N/A')),
+              DataCell(Text(user.email)),
+              DataCell(Text(user.phone ?? 'N/A')),
+              DataCell(
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: user.isActive
+                        ? const Color(0xFF4CAF50).withOpacity(0.1)
+                        : const Color(0xFFDC2626).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    user.isActive ? 'Activo' : 'Inactivo',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: user.isActive
+                          ? const Color(0xFF4CAF50)
+                          : const Color(0xFFDC2626),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              DataCell(
+                IconButton(
+                  icon: const Icon(Icons.edit, color: Color(0xFFFF9800)),
+                  onPressed: () async {
+                    final result = await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => EditEmployeeScreen(user: user),
+                      ),
+                    );
+                    if (result == true) {
+                      _loadEmployees();
+                      _loadStats();
+                    }
+                  },
+                  tooltip: 'Editar',
+                ),
+              ),
+            ],
+          );
+        }).toList(),
       ),
     );
   }
 
-  Widget _buildWorkerCard(WorkerModel worker) {
-    // Obtener avatar del usuario asociado si existe
-    final workerUser = _workerUsers.firstWhere(
-      (u) => u.id == worker.userId,
-      orElse: () => UserModel(
-        id: worker.userId,
-        email: worker.email ?? '',
-        role: 'worker',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      ),
-    );
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      color: Colors.grey[50],
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: const Color(0xFF4CAF50),
-          backgroundImage: workerUser.avatarUrl != null && workerUser.avatarUrl!.isNotEmpty
-              ? NetworkImage(workerUser.avatarUrl!)
-              : null,
-          child: workerUser.avatarUrl == null || workerUser.avatarUrl!.isEmpty
-              ? const Icon(Icons.pool, color: Colors.white, size: 20)
-              : null,
-        ),
-        title: Text(
-          worker.fullName,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF2C2C2C),
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(worker.email ?? 'Sin email'),
-            if (worker.phone != null && worker.phone!.isNotEmpty)
-              Text(worker.phone!),
-            if (worker.specialization != null && worker.specialization!.isNotEmpty)
-              Text(
-                'Especialización: ${worker.specialization}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-          ],
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: worker.status == 'active'
-                    ? const Color(0xFF4CAF50).withOpacity(0.1)
-                    : const Color(0xFFDC2626).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                worker.status == 'active' ? 'Activo' : 'Inactivo',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: worker.status == 'active'
-                      ? const Color(0xFF4CAF50)
-                      : const Color(0xFFDC2626),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+  Widget _buildWorkersTable() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: DataTable(
+        headingRowColor: MaterialStateProperty.all(Colors.grey[100]),
+        columns: const [
+          DataColumn(label: Text('Foto')),
+          DataColumn(label: Text('Nombre')),
+          DataColumn(label: Text('Email')),
+          DataColumn(label: Text('Teléfono')),
+          DataColumn(label: Text('Especialización')),
+          DataColumn(label: Text('Estado')),
+          DataColumn(label: Text('Acciones')),
+        ],
+        rows: _workers.map((worker) {
+          // Obtener avatar del usuario asociado
+          final workerUser = _workerUsers.firstWhere(
+            (u) => u.id == worker.userId,
+            orElse: () => UserModel(
+              id: worker.userId,
+              email: worker.email ?? '',
+              role: 'worker',
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
             ),
-          ],
-        ),
+          );
+
+          return DataRow(
+            cells: [
+              DataCell(
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: const Color(0xFF4CAF50),
+                  backgroundImage: workerUser.avatarUrl != null && workerUser.avatarUrl!.isNotEmpty
+                      ? NetworkImage(workerUser.avatarUrl!)
+                      : null,
+                  child: workerUser.avatarUrl == null || workerUser.avatarUrl!.isEmpty
+                      ? const Icon(Icons.pool, color: Colors.white, size: 16)
+                      : null,
+                ),
+              ),
+              DataCell(Text(worker.fullName)),
+              DataCell(Text(worker.email ?? 'N/A')),
+              DataCell(Text(worker.phone ?? 'N/A')),
+              DataCell(Text(worker.specialization ?? 'N/A')),
+              DataCell(
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: worker.status == 'active'
+                        ? const Color(0xFF4CAF50).withOpacity(0.1)
+                        : const Color(0xFFDC2626).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    worker.status == 'active' ? 'Activo' : worker.status == 'inactive' ? 'Inactivo' : 'En Ruta',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: worker.status == 'active'
+                          ? const Color(0xFF4CAF50)
+                          : const Color(0xFFDC2626),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              DataCell(
+                IconButton(
+                  icon: const Icon(Icons.edit, color: Color(0xFFFF9800)),
+                  onPressed: () async {
+                    final result = await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => EditWorkerScreen(
+                          worker: worker,
+                          workerUser: workerUser,
+                        ),
+                      ),
+                    );
+                    if (result == true) {
+                      _loadWorkers();
+                      _loadStats();
+                    }
+                  },
+                  tooltip: 'Editar',
+                ),
+              ),
+            ],
+          );
+        }).toList(),
       ),
     );
   }
