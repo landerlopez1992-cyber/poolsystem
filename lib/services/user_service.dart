@@ -63,6 +63,24 @@ class UserService {
     }
   }
 
+  // Obtener solo los administradores (empleados) de una empresa
+  Future<List<UserModel>> getAdminUsersByCompany(String companyId) async {
+    try {
+      final response = await _supabase
+          .from('users')
+          .select()
+          .eq('company_id', companyId)
+          .eq('role', 'admin')
+          .order('created_at', ascending: false);
+
+      return (response as List)
+          .map((json) => UserModel.fromJson(json))
+          .toList();
+    } catch (e) {
+      throw Exception('Error al obtener administradores: $e');
+    }
+  }
+
   // Actualizar usuario
   Future<UserModel> updateUser({
     required String userId,

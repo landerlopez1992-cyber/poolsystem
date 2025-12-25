@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../models/company_model.dart';
+import '../../models/user_model.dart';
+import '../../models/worker_model.dart';
 import '../../services/company_service.dart';
+import '../../services/user_service.dart';
+import '../../services/worker_service.dart';
 import '../../widgets/super_admin_layout.dart';
 import 'create_company_screen.dart';
+import '../admin/create_admin_user_screen.dart';
+import '../admin/create_worker_screen.dart';
 
 class CompanyDetailScreen extends StatefulWidget {
   final CompanyModel company;
@@ -15,13 +21,23 @@ class CompanyDetailScreen extends StatefulWidget {
 
 class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
   final _companyService = CompanyService();
+  final _userService = UserService();
+  final _workerService = WorkerService();
+  
   Map<String, dynamic>? _stats;
+  List<UserModel> _adminUsers = [];
+  List<WorkerModel> _workers = [];
+  
   bool _isLoadingStats = true;
+  bool _isLoadingEmployees = true;
+  bool _isLoadingWorkers = true;
 
   @override
   void initState() {
     super.initState();
     _loadStats();
+    _loadEmployees();
+    _loadWorkers();
   }
 
   Future<void> _loadStats() async {
@@ -34,6 +50,40 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
     } catch (e) {
       setState(() {
         _isLoadingStats = false;
+      });
+    }
+  }
+
+  Future<void> _loadEmployees() async {
+    setState(() {
+      _isLoadingEmployees = true;
+    });
+    try {
+      final employees = await _userService.getAdminUsersByCompany(widget.company.id);
+      setState(() {
+        _adminUsers = employees;
+        _isLoadingEmployees = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingEmployees = false;
+      });
+    }
+  }
+
+  Future<void> _loadWorkers() async {
+    setState(() {
+      _isLoadingWorkers = true;
+    });
+    try {
+      final workers = await _workerService.getWorkersByCompany(widget.company.id);
+      setState(() {
+        _workers = workers;
+        _isLoadingWorkers = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingWorkers = false;
       });
     }
   }
@@ -172,6 +222,150 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
                           ),
                         ],
                       ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Empleados (Administradores)
+            Card(
+              color: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Empleados (Administradores)',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF2C2C2C),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add_circle_outline),
+                          color: const Color(0xFFFF9800),
+                          onPressed: () async {
+                            final result = await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => CreateAdminUserScreen(
+                                  companyId: widget.company.id,
+                                ),
+                              ),
+                            );
+                            if (result == true) {
+                              _loadEmployees();
+                              _loadStats(); // Actualizar estadísticas
+                            }
+                          },
+                          tooltip: 'Crear Empleado',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    if (_isLoadingEmployees)
+                      const Center(child: CircularProgressIndicator())
+                    else if (_adminUsers.isEmpty)
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.person_outline,
+                                size: 48,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'No hay empleados registrados',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else
+                      ..._adminUsers.map((user) => _buildEmployeeCard(user)),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Limpiadores de Pool (Workers)
+            Card(
+              color: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Limpiadores de Pool',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF2C2C2C),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add_circle_outline),
+                          color: const Color(0xFFFF9800),
+                          onPressed: () async {
+                            final result = await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => CreateWorkerScreen(
+                                  companyId: widget.company.id,
+                                ),
+                              ),
+                            );
+                            if (result == true) {
+                              _loadWorkers();
+                              _loadStats(); // Actualizar estadísticas
+                            }
+                          },
+                          tooltip: 'Crear Limpiador de Pool',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    if (_isLoadingWorkers)
+                      const Center(child: CircularProgressIndicator())
+                    else if (_workers.isEmpty)
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.pool_outlined,
+                                size: 48,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'No hay limpiadores de pool registrados',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else
+                      ..._workers.map((worker) => _buildWorkerCard(worker)),
                   ],
                 ),
               ),
@@ -419,6 +613,120 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildEmployeeCard(UserModel user) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      color: Colors.grey[50],
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: const Color(0xFF37474F),
+          child: Text(
+            user.fullName[0].toUpperCase(),
+            style: const TextStyle(color: Colors.white),
+          ),
+        ),
+        title: Text(
+          user.fullName,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF2C2C2C),
+          ),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(user.email),
+            if (user.phone != null) Text(user.phone!),
+          ],
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: user.isActive
+                    ? const Color(0xFF4CAF50).withOpacity(0.1)
+                    : const Color(0xFFDC2626).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                user.isActive ? 'Activo' : 'Inactivo',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: user.isActive
+                      ? const Color(0xFF4CAF50)
+                      : const Color(0xFFDC2626),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWorkerCard(WorkerModel worker) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      color: Colors.grey[50],
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: const Color(0xFF4CAF50),
+          child: const Icon(Icons.pool, color: Colors.white, size: 20),
+        ),
+        title: Text(
+          worker.fullName,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF2C2C2C),
+          ),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(worker.email),
+            if (worker.phone != null) Text(worker.phone!),
+            if (worker.specialization != null)
+              Text(
+                'Especialización: ${worker.specialization}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+          ],
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: worker.status == 'active'
+                    ? const Color(0xFF4CAF50).withOpacity(0.1)
+                    : const Color(0xFFDC2626).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                worker.status == 'active' ? 'Activo' : 'Inactivo',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: worker.status == 'active'
+                      ? const Color(0xFF4CAF50)
+                      : const Color(0xFFDC2626),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
