@@ -163,11 +163,10 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
             // Subir logo
             final fileName = 'logo_${tempCompany.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
             final filePath = 'company-logos/$fileName';
-            final fileBytes = await _selectedLogoFile!.readAsBytes();
 
             await _supabase.storage
                 .from('company-logos')
-                .upload(filePath, fileBytes);
+                .upload(filePath, _selectedLogoFile!);
 
             finalLogoUrl = _supabase.storage
                 .from('company-logos')
@@ -252,11 +251,10 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
           try {
             final fileName = 'logo_${widget.company!.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
             final filePath = 'company-logos/$fileName';
-            final fileBytes = await _selectedLogoFile!.readAsBytes();
 
             await _supabase.storage
                 .from('company-logos')
-                .upload(filePath, fileBytes);
+                .upload(filePath, _selectedLogoFile!);
 
             finalLogoUrl = _supabase.storage
                 .from('company-logos')
