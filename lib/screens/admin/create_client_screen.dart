@@ -255,4 +255,4 @@ class _CreateClientScreenState extends State<CreateClientScreen> {
       ),
     );
   }
-
+}
