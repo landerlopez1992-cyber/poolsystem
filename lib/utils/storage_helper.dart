@@ -16,20 +16,22 @@ class StorageHelper {
     try {
       if (kIsWeb) {
         // En web, usar el método HTTP directo de Supabase
-        // Construir la URL del endpoint de storage
+        // Construir la URL del endpoint de storage (formato correcto)
+        // El filePath ya incluye el nombre del archivo, no necesitamos duplicar
         final url = '${AppConfig.supabaseUrl}/storage/v1/object/$bucket/$filePath';
         
         // Obtener el token de autenticación
         final session = supabase.auth.currentSession;
         final token = session?.accessToken ?? '';
         
-        // Subir usando HTTP PUT
-        final response = await http.put(
+        // Subir usando HTTP POST (Supabase Storage usa POST para upload)
+        final response = await http.post(
           Uri.parse(url),
           headers: {
             'Authorization': 'Bearer $token',
             'Content-Type': 'image/jpeg',
             'apikey': AppConfig.supabaseAnonKey,
+            'x-upsert': 'true', // Permite sobrescribir si existe
           },
           body: fileBytes,
         );
