@@ -149,24 +149,31 @@ class UserService {
             print('   - Email del worker: ${workerData['email']}');
             print('   - Company ID: ${workerData['company_id']}');
             
-            // Crear el usuario en public.users con los datos del worker
-            final newUser = await _supabase
-                .from('users')
-                .insert({
-                  'id': userId,
-                  'email': workerData['email'] ?? '',
-                  'full_name': workerData['full_name'] ?? fullName ?? '',
-                  'role': 'worker',
-                  'company_id': workerData['company_id'],
-                  'phone': phone,
-                  'avatar_url': avatarUrl,
-                  'is_active': isActive ?? true,
-                })
-                .select()
-                .single();
-            
-            print('✅ Usuario creado exitosamente en public.users');
-            existingUser = newUser;
+            try {
+              // Crear el usuario en public.users con los datos del worker
+              final newUser = await _supabase
+                  .from('users')
+                  .insert({
+                    'id': userId,
+                    'email': workerData['email'] ?? '',
+                    'full_name': workerData['full_name'] ?? fullName ?? '',
+                    'role': 'worker',
+                    'company_id': workerData['company_id'],
+                    'phone': phone,
+                    'avatar_url': avatarUrl,
+                    'is_active': isActive ?? true,
+                  })
+                  .select()
+                  .single();
+              
+              print('✅ Usuario creado exitosamente en public.users');
+              existingUser = newUser;
+            } catch (insertError) {
+              print('❌ Error al INSERTAR usuario: $insertError');
+              // Si falla por RLS, intentar solo actualizar el avatar_url sin crear el usuario
+              // Esto puede pasar si las políticas RLS no permiten INSERT
+              throw Exception('No se pudo crear el usuario en la base de datos. Error RLS: $insertError. Por favor, ejecuta el script SQL: database/fix_rls_users_insert_workers.sql');
+            }
           } else {
             throw Exception('Usuario no encontrado en la base de datos ni en workers. userId: $userId');
           }
