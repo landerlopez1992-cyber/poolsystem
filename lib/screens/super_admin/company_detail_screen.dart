@@ -82,13 +82,23 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
       final workers = await _workerService.getWorkersByCompany(widget.company.id);
       
       // Cargar usuarios asociados a los workers para obtener avatares
-      final workerUserIds = workers.map((w) => w.userId).toList();
-      if (workerUserIds.isNotEmpty) {
-        try {
-          final workerUsers = await _userService.getUsersByCompany(widget.company.id);
-          _workerUsers = workerUsers.where((u) => u.role == 'worker').toList();
-        } catch (e) {
-          // Error silencioso
+      // Obtener todos los usuarios de la empresa y filtrar los workers
+      try {
+        final allUsers = await _userService.getUsersByCompany(widget.company.id);
+        _workerUsers = allUsers.where((u) => u.role == 'worker').toList();
+      } catch (e) {
+        print('Error al cargar usuarios de workers: $e');
+        // Si falla, intentar cargar usuarios individualmente por worker
+        _workerUsers = [];
+        for (final worker in workers) {
+          try {
+            final user = await _userService.getUserById(worker.userId);
+            if (user != null) {
+              _workerUsers.add(user);
+            }
+          } catch (e) {
+            // Ignorar errores individuales
+          }
         }
       }
       
