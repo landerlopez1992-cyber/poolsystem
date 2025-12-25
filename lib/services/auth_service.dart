@@ -55,15 +55,35 @@ class AuthService {
   Future<UserModel?> getUserById(String userId) async {
     try {
       print('🔍 Buscando usuario en BD con ID: $userId');
-      final response = await _supabase
+      
+      // Intentar primero por ID
+      var response = await _supabase
           .from('users')
           .select()
           .eq('id', userId)
           .maybeSingle();
 
+      // Si no se encuentra por ID, intentar por email del usuario auth
+      if (response == null) {
+        print('⚠️ No encontrado por ID, intentando obtener email de auth...');
+        try {
+          final authUser = _supabase.auth.currentUser;
+          if (authUser != null && authUser.email != null) {
+            print('🔍 Buscando por email: ${authUser.email}');
+            response = await _supabase
+                .from('users')
+                .select()
+                .eq('email', authUser.email!)
+                .maybeSingle();
+          }
+        } catch (e) {
+          print('⚠️ Error al buscar por email: $e');
+        }
+      }
+
       if (response == null) {
         print('❌ Usuario NO encontrado en tabla users. ID: $userId');
-        print('💡 SOLUCIÓN: Ejecuta el SQL en database/SOLUCION_SIMPLE.sql');
+        print('💡 SOLUCIÓN: Verifica que el ID en auth.users coincida con el ID en users');
         return null;
       }
 
