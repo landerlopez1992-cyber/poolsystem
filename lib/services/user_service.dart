@@ -98,6 +98,17 @@ class UserService {
       if (avatarUrl != null) data['avatar_url'] = avatarUrl;
       if (isActive != null) data['is_active'] = isActive;
 
+      // Verificar que el usuario existe antes de actualizar
+      final existingUser = await _supabase
+          .from('users')
+          .select('id')
+          .eq('id', userId)
+          .maybeSingle();
+
+      if (existingUser == null) {
+        throw Exception('Usuario no encontrado en la base de datos');
+      }
+
       final response = await _supabase
           .from('users')
           .update(data)

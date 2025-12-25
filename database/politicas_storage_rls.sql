@@ -3,10 +3,17 @@
 -- ============================================
 -- Ejecuta estos comandos en el SQL Editor de Supabase
 -- para permitir subida y lectura de archivos en los buckets
+-- Este script elimina políticas existentes antes de crearlas
 
 -- ============================================
 -- BUCKET: company-logos
 -- ============================================
+
+-- Eliminar políticas existentes si hay
+DROP POLICY IF EXISTS "Public Access for company logos" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can upload company logos" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can update company logos" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can delete company logos" ON storage.objects;
 
 -- 1. Política de LECTURA PÚBLICA (SELECT)
 -- Permite que cualquiera pueda ver los logos
@@ -48,6 +55,12 @@ USING (
 -- ============================================
 -- BUCKET: avatars
 -- ============================================
+
+-- Eliminar políticas existentes si hay
+DROP POLICY IF EXISTS "Public Access for avatars" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can upload avatars" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can update avatars" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can delete avatars" ON storage.objects;
 
 -- 1. Política de LECTURA PÚBLICA (SELECT)
 CREATE POLICY "Public Access for avatars"
