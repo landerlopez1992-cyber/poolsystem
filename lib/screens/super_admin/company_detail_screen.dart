@@ -59,11 +59,15 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
           tooltip: 'Editar',
         ),
       ],
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+      child: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
             // Información de la empresa
             Card(
               color: Colors.white,
@@ -190,55 +194,169 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        // TODO: Implementar envío de push
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Funcionalidad de Push próximamente')),
-                        );
-                      },
-                      icon: const Icon(Icons.notifications),
-                      label: const Text('Enviar Notificación Push'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF9800),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                    // Botón Enviar Push - NO estirado, ancho controlado
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          // TODO: Implementar envío de push
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Funcionalidad de Push próximamente')),
+                          );
+                        },
+                        icon: const Icon(Icons.notifications),
+                        label: const Text('Enviar Notificación Push'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFF9800),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        _companyService.toggleCompanyStatus(
-                          widget.company.id,
-                          !widget.company.isActive,
-                        );
-                        if (mounted) {
-                          Navigator.of(context).pop(true);
-                        }
-                      },
-                      icon: Icon(widget.company.isActive
-                          ? Icons.block
-                          : Icons.check_circle),
-                      label: Text(widget.company.isActive
-                          ? 'Suspender Empresa'
-                          : 'Activar Empresa'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: widget.company.isActive
-                            ? const Color(0xFFDC2626)
-                            : const Color(0xFF4CAF50),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                    // Botón Suspender/Activar - NO estirado, ancho controlado
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          await _companyService.toggleCompanyStatus(
+                            widget.company.id,
+                            !widget.company.isActive,
+                          );
+                          if (mounted) {
+                            Navigator.of(context).pop(true);
+                          }
+                        },
+                        icon: Icon(widget.company.isActive
+                            ? Icons.block
+                            : Icons.check_circle),
+                        label: Text(widget.company.isActive
+                            ? 'Suspender Empresa'
+                            : 'Activar Empresa'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: widget.company.isActive
+                              ? const Color(0xFFDC2626)
+                              : const Color(0xFF4CAF50),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // Botón Eliminar - NO estirado, ancho controlado
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _showDeleteConfirmation(context),
+                        icon: const Icon(Icons.delete_forever),
+                        label: const Text('Eliminar Empresa'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFDC2626),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-          ],
+              ],
+            ),
+          ),
         ),
       ),
     );
+  }
+
+  Future<void> _showDeleteConfirmation(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirmar Eliminación'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '¿Estás seguro de que deseas eliminar la empresa "${widget.company.name}"?',
+                style: const TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDC2626).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: const Color(0xFFDC2626).withOpacity(0.3),
+                  ),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(
+                      Icons.warning,
+                      color: Color(0xFFDC2626),
+                      size: 20,
+                    ),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Esta acción no se puede deshacer. La empresa será marcada como inactiva.',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFFDC2626),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFDC2626),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Eliminar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true && mounted) {
+      try {
+        await _companyService.deleteCompany(widget.company.id);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Empresa eliminada exitosamente'),
+              backgroundColor: Color(0xFF4CAF50),
+            ),
+          );
+          Navigator.of(context).pop(true);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error al eliminar empresa: $e'),
+              backgroundColor: const Color(0xFFDC2626),
+            ),
+          );
+        }
+      }
+    }
   }
 
   Widget _buildInfoRow(String label, String value) {
