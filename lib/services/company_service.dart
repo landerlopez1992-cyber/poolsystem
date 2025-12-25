@@ -206,5 +206,55 @@ class CompanyService {
       throw Exception('Error al obtener estadísticas: $e');
     }
   }
+
+  // Obtener estadísticas globales del Super Admin
+  Future<Map<String, dynamic>> getSuperAdminStats() async {
+    try {
+      // 1. Empresas activas e inactivas
+      final allCompanies = await _supabase
+          .from('companies')
+          .select('is_active');
+      
+      int activeCompanies = 0;
+      int inactiveCompanies = 0;
+      
+      for (var company in allCompanies) {
+        if (company['is_active'] == true) {
+          activeCompanies++;
+        } else {
+          inactiveCompanies++;
+        }
+      }
+
+      // 2. Total de empleados (usuarios con rol admin)
+      final adminUsers = await _supabase
+          .from('users')
+          .select('id')
+          .eq('role', 'admin');
+      final totalAdmins = (adminUsers as List).length;
+
+      // 3. Total de limpiadores (workers)
+      final allWorkers = await _supabase
+          .from('workers')
+          .select('id');
+      final totalWorkers = (allWorkers as List).length;
+
+      // 4. Total de suscripciones activas (empresas activas * precio mensual)
+      const double monthlyPrice = 250.0; // Precio mensual por empresa
+      final totalSubscriptions = activeCompanies * monthlyPrice;
+
+      return {
+        'active_companies': activeCompanies,
+        'inactive_companies': inactiveCompanies,
+        'total_companies': activeCompanies + inactiveCompanies,
+        'total_admins': totalAdmins,
+        'total_workers': totalWorkers,
+        'total_subscriptions': totalSubscriptions,
+        'monthly_price': monthlyPrice,
+      };
+    } catch (e) {
+      throw Exception('Error al obtener estadísticas globales: $e');
+    }
+  }
 }
 

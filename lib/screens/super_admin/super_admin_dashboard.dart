@@ -19,12 +19,15 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
   final _authService = AuthService();
   List<CompanyModel> _companies = [];
   bool _isLoading = true;
+  bool _isLoadingStats = true;
   int _selectedIndex = 0; // 0: Dashboard, 1: Empresas, 2: Soporte
+  Map<String, dynamic>? _stats;
 
   @override
   void initState() {
     super.initState();
     _loadCompanies();
+    _loadStats();
   }
 
   Future<void> _loadCompanies() async {
@@ -41,6 +44,25 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al cargar empresas: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _loadStats() async {
+    try {
+      final stats = await _companyService.getSuperAdminStats();
+      setState(() {
+        _stats = stats;
+        _isLoadingStats = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingStats = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al cargar estadísticas: $e')),
         );
       }
     }
@@ -87,37 +109,126 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
   }
 
   Widget _buildDashboardContent() {
-    return _isLoading
-        ? const Center(child: CircularProgressIndicator())
-        : RefreshIndicator(
-            onRefresh: _loadCompanies,
-            child: _companies.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.business,
-                          size: 64,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No hay empresas registradas',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey[600],
+    return RefreshIndicator(
+      onRefresh: () async {
+        await Future.wait([_loadCompanies(), _loadStats()]);
+      },
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1200),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Estadísticas
+                if (_isLoadingStats)
+                  const Padding(
+                    padding: EdgeInsets.all(32.0),
+                    child: CircularProgressIndicator(),
+                  )
+                else if (_stats != null) ...[
+                  // Grid de estadísticas
+                  GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: MediaQuery.of(context).size.width > 800 ? 3 : 2,
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                    childAspectRatio: 1.5,
+                    children: [
+                      _buildStatCard(
+                        'Empresas Activas',
+                        _stats!['active_companies'].toString(),
+                        Icons.business,
+                        const Color(0xFF4CAF50),
+                      ),
+                      _buildStatCard(
+                        'Empresas Inactivas',
+                        _stats!['inactive_companies'].toString(),
+                        Icons.business_outlined,
+                        const Color(0xFFDC2626),
+                      ),
+                      _buildStatCard(
+                        'Total Empleados',
+                        _stats!['total_admins'].toString(),
+                        Icons.people,
+                        const Color(0xFF2196F3),
+                      ),
+                      _buildStatCard(
+                        'Limpiadores de Pool',
+                        _stats!['total_workers'].toString(),
+                        Icons.pool,
+                        const Color(0xFFFF9800),
+                      ),
+                      _buildStatCard(
+                        'Suscripciones Activas',
+                        '\$${_stats!['total_subscriptions'].toStringAsFixed(0)}',
+                        Icons.payments,
+                        const Color(0xFF9C27B0),
+                        subtitle: '${_stats!['active_companies']} empresas × \$${_stats!['monthly_price'].toStringAsFixed(0)}/mes',
+                      ),
+                      _buildStatCard(
+                        'Total Empresas',
+                        _stats!['total_companies'].toString(),
+                        Icons.domain,
+                        const Color(0xFF37474F),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                ],
+                
+                // Lista de empresas
+                if (_isLoading)
+                  const Padding(
+                    padding: EdgeInsets.all(32.0),
+                    child: CircularProgressIndicator(),
+                  )
+                else if (_companies.isEmpty)
+                  Card(
+                    color: Colors.white,
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.business,
+                            size: 64,
+                            color: Colors.grey[400],
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 16),
+                          Text(
+                            'No hay empresas registradas',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _companies.length,
-                    itemBuilder: (context, index) {
-                      final company = _companies[index];
-                      return Card(
+                else ...[
+                  // Título de la sección
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Text(
+                        'Empresas Activas',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Lista de empresas
+                  ..._companies.map((company) => Card(
                         margin: const EdgeInsets.only(bottom: 12),
                         color: Colors.white,
                         child: ListTile(
@@ -177,6 +288,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                                         );
                                         if (result == true) {
                                           _loadCompanies();
+                                          _loadStats();
                                         }
                                       }
                                     },
@@ -209,15 +321,6 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                                       ],
                                     ),
                                   ),
-                                  const PopupMenuItem(
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.notifications, size: 20),
-                                        SizedBox(width: 8),
-                                        Text('Enviar Push'),
-                                      ],
-                                    ),
-                                  ),
                                 ],
                               ),
                             ],
@@ -232,13 +335,76 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                             // Recargar lista si se hizo alguna acción (eliminar, editar, etc.)
                             if (result == true) {
                               _loadCompanies();
+                              _loadStats();
                             }
                           },
                         ),
-                      );
-                    },
+                      )),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String title, String value, IconData icon, Color color, {String? subtitle}) {
+    return Card(
+      color: Colors.white,
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-          );
+                  child: Icon(icon, color: color, size: 24),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+            if (subtitle != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[500],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildCompaniesContent() {
@@ -441,7 +607,12 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                     if (_selectedIndex == 0 || _selectedIndex == 1)
                       IconButton(
                         icon: const Icon(Icons.refresh),
-                        onPressed: _loadCompanies,
+                        onPressed: () {
+                          _loadCompanies();
+                          if (_selectedIndex == 0) {
+                            _loadStats();
+                          }
+                        },
                         tooltip: 'Actualizar',
                       ),
                     IconButton(
