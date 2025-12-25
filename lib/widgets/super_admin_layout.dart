@@ -7,6 +7,7 @@ class SuperAdminLayout extends StatelessWidget {
   final List<Widget>? actions;
   final Widget? floatingActionButton;
   final int? selectedIndex;
+  final ValueChanged<int>? onItemSelected;
 
   const SuperAdminLayout({
     super.key,
@@ -15,6 +16,7 @@ class SuperAdminLayout extends StatelessWidget {
     this.actions,
     this.floatingActionButton,
     this.selectedIndex,
+    this.onItemSelected,
   });
 
   @override
@@ -26,7 +28,7 @@ class SuperAdminLayout extends StatelessWidget {
           // Sidebar estático - siempre visible, NUNCA desaparece
           SuperAdminSidebar(
             selectedIndex: selectedIndex ?? _getSelectedIndexFromTitle(title),
-            onItemSelected: (index) {
+            onItemSelected: onItemSelected ?? (index) {
               // Si ya estamos en la pantalla correcta, no hacer nada
               final currentIndex = selectedIndex ?? _getSelectedIndexFromTitle(title);
               if (currentIndex == index) return;
