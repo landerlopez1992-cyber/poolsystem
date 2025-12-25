@@ -310,14 +310,14 @@ class CompanyService {
           .select('id');
       final totalWorkers = (allWorkers as List).length;
 
-      // 4. Total de suscripciones activas (suma de precios reales de empresas activas)
+      // 4. Total de suscripciones activas (SOLO mensuales, no lifetime)
       // Obtener todas las empresas activas con sus precios de suscripción
       final activeCompaniesData = await _supabase
           .from('companies')
           .select('subscription_price, subscription_type')
           .eq('is_active', true);
       
-      double totalSubscriptions = 0.0;
+      double totalSubscriptions = 0.0; // Solo suma suscripciones mensuales
       int monthlySubscriptions = 0;
       int lifetimeSubscriptions = 0;
       
@@ -330,8 +330,7 @@ class CompanyService {
           totalSubscriptions += price;
           monthlySubscriptions++;
         } else if (type == 'lifetime') {
-          // Para suscripciones lifetime, sumar el precio total
-          totalSubscriptions += price;
+          // Para suscripciones lifetime, NO sumar al total mensual (son pagos únicos)
           lifetimeSubscriptions++;
         }
       }
