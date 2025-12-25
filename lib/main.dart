@@ -29,7 +29,12 @@ class MyApp extends StatelessWidget {
       initialRoute: '/login',
       routes: {
         '/login': (context) => const LoginScreen(),
-        '/super-admin': (context) => const SuperAdminDashboard(),
+        '/super-admin': (context) {
+          // Obtener el índice de los argumentos de la ruta
+          final args = ModalRoute.of(context)?.settings.arguments;
+          final index = args is int ? args : null;
+          return SuperAdminDashboard(initialIndex: index);
+        },
         '/admin': (context) => const AdminDashboard(),
         '/worker': (context) => const WorkerDashboard(),
       },

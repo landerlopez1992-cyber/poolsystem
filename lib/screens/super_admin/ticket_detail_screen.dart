@@ -196,10 +196,11 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
       return;
     }
     
-    // Para otros índices, navegar al dashboard y cambiar de sección
+    // Para otros índices, navegar al dashboard con el índice correcto
     Navigator.of(context).pushNamedAndRemoveUntil(
       '/super-admin',
       (route) => false,
+      arguments: index, // Pasar el índice como argumento
     );
   }
 

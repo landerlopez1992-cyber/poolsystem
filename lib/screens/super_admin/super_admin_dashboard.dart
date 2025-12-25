@@ -8,7 +8,9 @@ import 'company_detail_screen.dart';
 import 'support_screen.dart';
 
 class SuperAdminDashboard extends StatefulWidget {
-  const SuperAdminDashboard({super.key});
+  final int? initialIndex; // Índice inicial para la sección
+  
+  const SuperAdminDashboard({super.key, this.initialIndex});
 
   @override
   State<SuperAdminDashboard> createState() => _SuperAdminDashboardState();
@@ -20,12 +22,14 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
   List<CompanyModel> _companies = [];
   bool _isLoading = true;
   bool _isLoadingStats = true;
-  int _selectedIndex = 0; // 0: Dashboard, 1: Empresas, 2: Soporte
+  late int _selectedIndex; // 0: Dashboard, 1: Empresas, 2: Soporte
   Map<String, dynamic>? _stats;
 
   @override
   void initState() {
     super.initState();
+    // Usar el índice inicial si se proporciona, sino default a 0
+    _selectedIndex = widget.initialIndex ?? 0;
     _loadCompanies();
     _loadStats();
   }

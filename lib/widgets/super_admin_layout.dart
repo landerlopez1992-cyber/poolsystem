@@ -35,10 +35,11 @@ class SuperAdminLayout extends StatelessWidget {
                 final currentIndex = selectedIndex ?? _getSelectedIndexFromTitle(title);
                 if (currentIndex == index) return;
                 
-                // Navegar según el índice
+                // Navegar según el índice, pasando el índice como argumento
                 Navigator.of(context).pushNamedAndRemoveUntil(
                   '/super-admin',
                   (route) => false,
+                  arguments: index,
                 );
               },
             ),
