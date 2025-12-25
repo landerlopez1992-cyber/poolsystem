@@ -5,12 +5,19 @@ class CompanyService {
   final _supabase = SupabaseService.client;
 
   // Obtener todas las empresas (Super Admin)
-  Future<List<CompanyModel>> getAllCompanies() async {
+  // Por defecto solo trae empresas activas, pero se puede cambiar
+  Future<List<CompanyModel>> getAllCompanies({bool onlyActive = true}) async {
     try {
-      final response = await _supabase
+      var query = _supabase
           .from('companies')
-          .select()
-          .order('created_at', ascending: false);
+          .select();
+      
+      // Filtrar solo activas si se solicita
+      if (onlyActive) {
+        query = query.eq('is_active', true);
+      }
+      
+      final response = await query.order('created_at', ascending: false);
 
       return (response as List)
           .map((json) => CompanyModel.fromJson(json))
