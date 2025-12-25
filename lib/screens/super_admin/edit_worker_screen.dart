@@ -47,6 +47,23 @@ class _EditWorkerScreenState extends State<EditWorkerScreen> {
     _licenseController.text = widget.worker.licenseNumber ?? '';
     _status = widget.worker.status;
     _avatarUrl = widget.workerUser?.avatarUrl;
+    
+    // Cargar el usuario actualizado al iniciar para obtener el avatar más reciente
+    _loadWorkerUser();
+  }
+  
+  Future<void> _loadWorkerUser() async {
+    try {
+      final user = await _userService.getUserById(widget.worker.userId);
+      if (user != null && mounted) {
+        setState(() {
+          _avatarUrl = user.avatarUrl;
+        });
+      }
+    } catch (e) {
+      // Error silencioso, usar el avatar del widget
+      print('Error al cargar usuario: $e');
+    }
   }
 
   @override
@@ -114,6 +131,14 @@ class _EditWorkerScreenState extends State<EditWorkerScreen> {
           );
 
           finalAvatarUrl = publicUrl;
+          
+          // Actualizar estado local para mostrar el avatar inmediatamente
+          if (mounted) {
+            setState(() {
+              _avatarUrl = finalAvatarUrl;
+              _selectedAvatarBytes = null; // Limpiar bytes ya que ahora tenemos URL
+            });
+          }
           
           // Actualizar avatar en la tabla users
           try {
