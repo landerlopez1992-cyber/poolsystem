@@ -29,36 +29,47 @@
    - **Allowed MIME types**: `image/jpeg, image/png, image/jpg`
 3. Haz clic en **"Create bucket"**
 
-### 4. Configurar Políticas RLS (Row Level Security)
+### 4. Configurar Políticas RLS (Row Level Security) ⚠️ IMPORTANTE
 
-Después de crear los buckets, necesitas configurar las políticas de seguridad:
+**El error "new row violates row-level security policy" significa que faltan las políticas de INSERT.**
 
-#### Para "company-logos":
+Tienes dos opciones:
+
+#### Opción A: Usar el SQL Editor (RECOMENDADO - Más rápido)
+
+1. Ve a **SQL Editor** en Supabase
+2. Abre el archivo `database/politicas_storage_rls.sql` de este proyecto
+3. Copia y pega TODO el contenido en el SQL Editor
+4. Haz clic en **"Run"** o presiona `Ctrl+Enter` (o `Cmd+Enter` en Mac)
+5. ✅ Listo! Todas las políticas estarán creadas
+
+#### Opción B: Crear políticas manualmente desde la interfaz
 
 1. Ve a **Storage** → **Policies** → Selecciona el bucket `company-logos`
 2. Crea una política de **SELECT** (lectura pública):
+   - Nombre: `Public Access for company logos`
+   - Operación: ✅ SELECT
+   - Target roles: Dejar vacío (público)
+   - Policy definition:
    ```sql
-   -- Permitir lectura pública de logos
-   CREATE POLICY "Public Access for company logos"
-   ON storage.objects FOR SELECT
    USING (bucket_id = 'company-logos');
    ```
 
-3. Crea una política de **INSERT** (solo usuarios autenticados):
+3. **⚠️ CRÍTICO:** Crea una política de **INSERT** (subida):
+   - Nombre: `Authenticated users can upload company logos`
+   - Operación: ✅ INSERT
+   - Target roles: Dejar vacío o seleccionar "authenticated"
+   - Policy definition:
    ```sql
-   -- Permitir subida solo a usuarios autenticados
-   CREATE POLICY "Authenticated users can upload company logos"
-   ON storage.objects FOR INSERT
    WITH CHECK (
      bucket_id = 'company-logos' 
      AND auth.role() = 'authenticated'
    );
    ```
 
-#### Para "avatars":
+4. Repite para **UPDATE** y **DELETE** si quieres permitir edición/eliminación
 
-1. Repite el proceso para el bucket `avatars`
-2. Crea políticas similares para lectura pública y subida autenticada
+5. Repite todo el proceso para el bucket `avatars`
 
 ### 5. Verificar que los buckets existen
 
