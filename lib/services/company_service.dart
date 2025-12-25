@@ -277,9 +277,31 @@ class CompanyService {
           .select('id');
       final totalWorkers = (allWorkers as List).length;
 
-      // 4. Total de suscripciones activas (empresas activas * precio mensual)
-      const double monthlyPrice = 250.0; // Precio mensual por empresa
-      final totalSubscriptions = activeCompanies * monthlyPrice;
+      // 4. Total de suscripciones activas (suma de precios reales de empresas activas)
+      // Obtener todas las empresas activas con sus precios de suscripción
+      final activeCompaniesData = await _supabase
+          .from('companies')
+          .select('subscription_price, subscription_type')
+          .eq('is_active', true);
+      
+      double totalSubscriptions = 0.0;
+      int monthlySubscriptions = 0;
+      int lifetimeSubscriptions = 0;
+      
+      for (var company in activeCompaniesData) {
+        final price = (company['subscription_price'] as num?)?.toDouble() ?? 0.0;
+        final type = company['subscription_type'] as String? ?? 'monthly';
+        
+        if (type == 'monthly') {
+          // Para suscripciones mensuales, sumar el precio mensual
+          totalSubscriptions += price;
+          monthlySubscriptions++;
+        } else if (type == 'lifetime') {
+          // Para suscripciones lifetime, sumar el precio total
+          totalSubscriptions += price;
+          lifetimeSubscriptions++;
+        }
+      }
 
       return {
         'active_companies': activeCompanies,
@@ -288,7 +310,8 @@ class CompanyService {
         'total_admins': totalAdmins,
         'total_workers': totalWorkers,
         'total_subscriptions': totalSubscriptions,
-        'monthly_price': monthlyPrice,
+        'monthly_subscriptions': monthlySubscriptions,
+        'lifetime_subscriptions': lifetimeSubscriptions,
       };
     } catch (e) {
       throw Exception('Error al obtener estadísticas globales: $e');

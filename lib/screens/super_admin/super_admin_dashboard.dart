@@ -167,7 +167,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                         '\$${_stats!['total_subscriptions'].toStringAsFixed(0)}',
                         Icons.payments,
                         const Color(0xFF9C27B0),
-                        subtitle: '${_stats!['active_companies']} empresas × \$${_stats!['monthly_price'].toStringAsFixed(0)}/mes',
+                        subtitle: _buildSubscriptionSubtitle(),
                       ),
                       _buildStatCard(
                         'Total Empresas',
