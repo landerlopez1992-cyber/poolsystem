@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io' if (dart.library.html) 'dart:html' as html;
 import 'dart:typed_data';
 import '../../services/company_service.dart';
 import '../../models/company_model.dart';
 import '../../widgets/super_admin_layout.dart';
 import '../../services/supabase_service.dart';
+import '../../utils/storage_helper.dart';
 
 class CreateCompanyScreen extends StatefulWidget {
   final CompanyModel? company; // Si se proporciona, es edición
@@ -75,13 +75,13 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
           final fileName = 'logo_${widget.company!.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
           final filePath = 'company-logos/$fileName';
 
-          await _supabase.storage
-              .from('company-logos')
-              .upload(filePath, fileBytes);
-
-          final publicUrl = _supabase.storage
-              .from('company-logos')
-              .getPublicUrl(filePath);
+          // Subir usando helper (compatible con web y mobile)
+          final publicUrl = await StorageHelper.uploadFile(
+            supabase: _supabase,
+            bucket: 'company-logos',
+            filePath: filePath,
+            fileBytes: fileBytes,
+          );
 
           setState(() {
             _logoUrl = publicUrl;
@@ -172,13 +172,13 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
             // Leer bytes del archivo
             final fileBytes = await _selectedLogoFile!.readAsBytes();
 
-            await _supabase.storage
-                .from('company-logos')
-                .upload(filePath, fileBytes);
-
-            finalLogoUrl = _supabase.storage
-                .from('company-logos')
-                .getPublicUrl(filePath);
+            // Subir usando helper (compatible con web y mobile)
+            finalLogoUrl = await StorageHelper.uploadFile(
+              supabase: _supabase,
+              bucket: 'company-logos',
+              filePath: filePath,
+              fileBytes: fileBytes,
+            );
 
             // Actualizar empresa con logo
             await _companyService.updateCompany(
@@ -263,13 +263,13 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
             // Leer bytes del archivo
             final fileBytes = await _selectedLogoFile!.readAsBytes();
 
-            await _supabase.storage
-                .from('company-logos')
-                .upload(filePath, fileBytes);
-
-            finalLogoUrl = _supabase.storage
-                .from('company-logos')
-                .getPublicUrl(filePath);
+            // Subir usando helper (compatible con web y mobile)
+            finalLogoUrl = await StorageHelper.uploadFile(
+              supabase: _supabase,
+              bucket: 'company-logos',
+              filePath: filePath,
+              fileBytes: fileBytes,
+            );
           } catch (e) {
             setState(() {
               _isUploadingLogo = false;
