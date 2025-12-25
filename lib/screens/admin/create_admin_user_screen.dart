@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/user_service.dart';
+import '../../widgets/super_admin_layout.dart';
 
 class CreateAdminUserScreen extends StatefulWidget {
   final String companyId;
@@ -70,19 +71,25 @@ class _CreateAdminUserScreenState extends State<CreateAdminUserScreen> {
     }
   }
 
+  void _handleSidebarNavigation(int index) {
+    // Navegar al dashboard con el índice correcto
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      '/super-admin',
+      (route) => false,
+      arguments: index,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Ancho máximo para el formulario (responsive)
     final maxWidth = MediaQuery.of(context).size.width > 600 ? 500.0 : double.infinity;
     
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      appBar: AppBar(
-        title: const Text('Crear Administrador'),
-        backgroundColor: const Color(0xFF37474F),
-        foregroundColor: Colors.white,
-      ),
-      body: Center(
+    return SuperAdminLayout(
+      title: 'Crear Administrador',
+      selectedIndex: 1, // Empresas
+      onItemSelected: _handleSidebarNavigation,
+      child: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: ConstrainedBox(
