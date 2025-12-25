@@ -7,16 +7,26 @@ class AuthService {
   // Iniciar sesión
   Future<UserModel?> signIn(String email, String password) async {
     try {
+      print('🔐 Intentando iniciar sesión con: $email');
       final response = await _supabase.auth.signInWithPassword(
         email: email,
         password: password,
       );
 
       if (response.user != null) {
-        return await getUserById(response.user!.id);
+        print('✅ Autenticación exitosa. User ID: ${response.user!.id}');
+        final user = await getUserById(response.user!.id);
+        if (user != null) {
+          print('✅ Usuario encontrado en BD. Rol: ${user.role}');
+        } else {
+          print('❌ Usuario NO encontrado en tabla users. Necesita ejecutar SQL.');
+        }
+        return user;
       }
+      print('❌ No se pudo autenticar');
       return null;
     } catch (e) {
+      print('❌ Error en signIn: $e');
       throw Exception('Error al iniciar sesión: $e');
     }
   }
@@ -44,20 +54,23 @@ class AuthService {
   // Obtener usuario por ID
   Future<UserModel?> getUserById(String userId) async {
     try {
+      print('🔍 Buscando usuario en BD con ID: $userId');
       final response = await _supabase
           .from('users')
           .select()
           .eq('id', userId)
-          .maybeSingle(); // Cambiar a maybeSingle para manejar cuando no existe
+          .maybeSingle();
 
       if (response == null) {
-        return null; // Usuario no existe en tabla users
+        print('❌ Usuario NO encontrado en tabla users. ID: $userId');
+        print('💡 SOLUCIÓN: Ejecuta el SQL en database/SOLUCION_SIMPLE.sql');
+        return null;
       }
 
+      print('✅ Usuario encontrado: ${response['email']} - Rol: ${response['role']}');
       return UserModel.fromJson(response);
     } catch (e) {
-      // Si hay error, retornar null en lugar de lanzar excepción
-      print('Error al obtener usuario: $e');
+      print('❌ Error al obtener usuario: $e');
       return null;
     }
   }

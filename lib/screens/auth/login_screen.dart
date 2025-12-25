@@ -57,12 +57,12 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         }
       } else {
-        // Usuario no existe o credenciales inválidas
+        // Usuario no existe en tabla users o credenciales inválidas
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Credenciales inválidas o usuario no encontrado. Contacta al administrador.'),
-              duration: Duration(seconds: 5),
+              content: Text('Usuario no encontrado en la base de datos. Ejecuta el SQL en Supabase para crear el usuario.'),
+              duration: Duration(seconds: 8),
             ),
           );
         }
