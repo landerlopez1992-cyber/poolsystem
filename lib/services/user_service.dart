@@ -150,29 +150,52 @@ class UserService {
             print('   - Company ID: ${workerData['company_id']}');
             
             try {
-              // Crear el usuario en public.users con los datos del worker
-              final newUser = await _supabase
-                  .from('users')
-                  .insert({
-                    'id': userId,
-                    'email': workerData['email'] ?? '',
-                    'full_name': workerData['full_name'] ?? fullName ?? '',
-                    'role': 'worker',
-                    'company_id': workerData['company_id'],
-                    'phone': phone,
-                    'avatar_url': avatarUrl,
-                    'is_active': isActive ?? true,
-                  })
-                  .select()
-                  .single();
-              
-              print('✅ Usuario creado exitosamente en public.users');
-              existingUser = newUser;
+              // Intentar crear el usuario usando la función de base de datos (si existe)
+              // o directamente con INSERT
+              try {
+                // Primero intentar con la función create_user_for_worker (más seguro)
+                final functionResult = await _supabase.rpc(
+                  'create_user_for_worker',
+                  params: {
+                    'p_user_id': userId,
+                    'p_email': workerData['email'] ?? '',
+                    'p_full_name': workerData['full_name'] ?? fullName ?? '',
+                    'p_company_id': workerData['company_id'],
+                    'p_phone': phone,
+                    'p_avatar_url': avatarUrl,
+                  },
+                );
+                
+                if (functionResult != null) {
+                  print('✅ Usuario creado usando función create_user_for_worker');
+                  existingUser = UserModel.fromJson(functionResult);
+                }
+              } catch (functionError) {
+                print('⚠️ Función no disponible, intentando INSERT directo: $functionError');
+                
+                // Si la función no existe, intentar INSERT directo
+                final newUser = await _supabase
+                    .from('users')
+                    .insert({
+                      'id': userId,
+                      'email': workerData['email'] ?? '',
+                      'full_name': workerData['full_name'] ?? fullName ?? '',
+                      'role': 'worker',
+                      'company_id': workerData['company_id'],
+                      'phone': phone,
+                      'avatar_url': avatarUrl,
+                      'is_active': isActive ?? true,
+                    })
+                    .select()
+                    .single();
+                
+                print('✅ Usuario creado exitosamente en public.users');
+                existingUser = newUser;
+              }
             } catch (insertError) {
               print('❌ Error al INSERTAR usuario: $insertError');
-              // Si falla por RLS, intentar solo actualizar el avatar_url sin crear el usuario
-              // Esto puede pasar si las políticas RLS no permiten INSERT
-              throw Exception('No se pudo crear el usuario en la base de datos. Error RLS: $insertError. Por favor, ejecuta el script SQL: database/fix_rls_users_insert_workers.sql');
+              // Si falla por RLS, mostrar mensaje claro
+              throw Exception('No se pudo crear el usuario en la base de datos. Error RLS: $insertError. Por favor, ejecuta el script SQL: database/SOLUCION_DEFINITIVA_RLS_INSERT.sql');
             }
           } else {
             throw Exception('Usuario no encontrado en la base de datos ni en workers. userId: $userId');
