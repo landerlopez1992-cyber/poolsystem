@@ -222,13 +222,17 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                               ),
                             ],
                           ),
-                          onTap: () {
-                            Navigator.of(context).push(
+                          onTap: () async {
+                            final result = await Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (_) =>
                                     CompanyDetailScreen(company: company),
                               ),
                             );
+                            // Recargar lista si se hizo alguna acción (eliminar, editar, etc.)
+                            if (result == true) {
+                              _loadCompanies();
+                            }
                           },
                         ),
                       );
@@ -364,13 +368,17 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                               ),
                             ],
                           ),
-                          onTap: () {
-                            Navigator.of(context).push(
+                          onTap: () async {
+                            final result = await Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (_) =>
                                     CompanyDetailScreen(company: company),
                               ),
                             );
+                            // Recargar lista si se hizo alguna acción (eliminar, editar, etc.)
+                            if (result == true) {
+                              _loadCompanies();
+                            }
                           },
                         ),
                       );
