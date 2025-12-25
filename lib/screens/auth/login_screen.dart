@@ -56,18 +56,14 @@ class _LoginScreenState extends State<LoginScreen> {
             );
           }
         }
-      } else if (mounted) {
-        // Usuario no existe en tabla users
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Usuario no encontrado. Contacta al administrador.'),
-            duration: Duration(seconds: 5),
-          ),
-        );
-      }
+      } else {
+        // Usuario no existe o credenciales inválidas
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Credenciales inválidas')),
+            const SnackBar(
+              content: Text('Credenciales inválidas o usuario no encontrado. Contacta al administrador.'),
+              duration: Duration(seconds: 5),
+            ),
           );
         }
       }
