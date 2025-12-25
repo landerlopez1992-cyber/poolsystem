@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import '../config/app_config.dart';
 
 class StorageHelper {
   /// Subir archivo a Supabase Storage (compatible con web y mobile)
@@ -16,7 +17,7 @@ class StorageHelper {
       if (kIsWeb) {
         // En web, usar el método HTTP directo de Supabase
         // Construir la URL del endpoint de storage
-        final url = '${supabase.supabaseUrl}/storage/v1/object/$bucket/$filePath';
+        final url = '${AppConfig.supabaseUrl}/storage/v1/object/$bucket/$filePath';
         
         // Obtener el token de autenticación
         final session = supabase.auth.currentSession;
@@ -28,7 +29,7 @@ class StorageHelper {
           headers: {
             'Authorization': 'Bearer $token',
             'Content-Type': 'image/jpeg',
-            'apikey': supabase.supabaseKey,
+            'apikey': AppConfig.supabaseAnonKey,
           },
           body: fileBytes,
         );
