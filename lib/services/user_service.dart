@@ -111,23 +111,36 @@ class UserService {
     bool? isActive,
   }) async {
     try {
+      print('🔄 UserService.updateUser - userId: $userId');
       final Map<String, dynamic> data = {};
       if (fullName != null) data['full_name'] = fullName;
       if (phone != null) data['phone'] = phone;
-      if (avatarUrl != null) data['avatar_url'] = avatarUrl;
+      if (avatarUrl != null) {
+        data['avatar_url'] = avatarUrl;
+        print('📸 Avatar URL a guardar: $avatarUrl');
+      }
       if (isActive != null) data['is_active'] = isActive;
+
+      print('📝 Datos a actualizar: $data');
 
       // Verificar que el usuario existe antes de actualizar
       final existingUser = await _supabase
           .from('users')
-          .select('id')
+          .select('id, email, role')
           .eq('id', userId)
           .maybeSingle();
 
-      if (existingUser == null) {
-        throw Exception('Usuario no encontrado en la base de datos');
+      print('🔍 Usuario existente: ${existingUser != null ? "SÍ" : "NO"}');
+      if (existingUser != null) {
+        print('   - Email: ${existingUser['email']}');
+        print('   - Role: ${existingUser['role']}');
       }
 
+      if (existingUser == null) {
+        throw Exception('Usuario no encontrado en la base de datos. userId: $userId');
+      }
+
+      print('💾 Ejecutando UPDATE en tabla users...');
       final response = await _supabase
           .from('users')
           .update(data)
@@ -135,8 +148,12 @@ class UserService {
           .select()
           .single();
 
+      print('✅ Usuario actualizado exitosamente');
+      print('   - Avatar URL guardada: ${response['avatar_url']}');
+      
       return UserModel.fromJson(response);
     } catch (e) {
+      print('❌ ERROR en UserService.updateUser: $e');
       throw Exception('Error al actualizar usuario: $e');
     }
   }

@@ -120,8 +120,10 @@ class _EditWorkerScreenState extends State<EditWorkerScreen> {
       // Si hay un avatar nuevo, subirlo primero
       if (_selectedAvatarFile != null && _selectedAvatarBytes != null) {
         try {
+          print('🔄 Iniciando subida de avatar...');
           final fileName = 'avatar_${widget.worker.userId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
           final filePath = 'avatars/$fileName';
+          print('📁 Ruta del archivo: $filePath');
 
           final publicUrl = await StorageHelper.uploadFile(
             supabase: _supabase,
@@ -130,6 +132,7 @@ class _EditWorkerScreenState extends State<EditWorkerScreen> {
             fileBytes: _selectedAvatarBytes!,
           );
 
+          print('✅ Avatar subido exitosamente. URL: $publicUrl');
           finalAvatarUrl = publicUrl;
           
           // Actualizar estado local para mostrar el avatar inmediatamente
@@ -141,16 +144,28 @@ class _EditWorkerScreenState extends State<EditWorkerScreen> {
           }
           
           // Actualizar avatar en la tabla users
+          print('🔄 Actualizando avatar en tabla users para userId: ${widget.worker.userId}');
           try {
-            await _userService.updateUser(
+            final updatedUser = await _userService.updateUser(
               userId: widget.worker.userId,
               avatarUrl: finalAvatarUrl,
             );
+            print('✅ Avatar actualizado en users. URL guardada: ${updatedUser.avatarUrl}');
           } catch (e) {
-            // Si falla actualizar el avatar en users, continuar con la actualización del worker
-            print('Advertencia: No se pudo actualizar avatar en users: $e');
+            // Si falla actualizar el avatar en users, mostrar error pero continuar
+            print('❌ ERROR al actualizar avatar en users: $e');
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Avatar subido pero error al guardar en BD: $e'),
+                  duration: const Duration(seconds: 5),
+                ),
+              );
+            }
+            // NO retornar aquí, continuar con la actualización del worker
           }
         } catch (e) {
+          print('❌ ERROR al subir avatar: $e');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Error al subir avatar: $e')),
