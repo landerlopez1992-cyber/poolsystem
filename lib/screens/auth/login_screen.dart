@@ -39,22 +39,22 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (user != null && mounted) {
-        // SOLO trabajadores pueden usar la app móvil
-        if (user.isWorker) {
+        // Navegar según el rol
+        if (user.isSuperAdmin) {
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            '/super-admin',
+            (route) => false,
+          );
+        } else if (user.isAdmin) {
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            '/admin',
+            (route) => false,
+          );
+        } else if (user.isWorker) {
           Navigator.of(context).pushNamedAndRemoveUntil(
             '/worker',
             (route) => false,
           );
-        } else {
-          // Super Admin y Admin deben usar la web
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Esta app es solo para trabajadores. Super Admin y Admin deben usar la aplicación web.'),
-                duration: Duration(seconds: 5),
-              ),
-            );
-          }
         }
       } else {
         // Usuario no existe o credenciales inválidas
