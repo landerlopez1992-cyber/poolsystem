@@ -285,7 +285,7 @@ class _EditWorkerScreenState extends State<EditWorkerScreen> {
                                             : null),
                                     child: _selectedAvatarBytes == null && (_avatarUrl == null || _avatarUrl!.isEmpty)
                                         ? const Icon(
-                                            Icons.pool,
+                                            Icons.person,
                                             size: 50,
                                             color: Colors.grey,
                                           )
