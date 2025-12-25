@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+import 'dart:io' if (dart.library.html) 'dart:html' as html;
+import 'dart:typed_data';
 import '../../services/company_service.dart';
 import '../../models/company_model.dart';
 import '../../widgets/super_admin_layout.dart';
@@ -29,7 +30,8 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
   bool _obscurePassword = true;
   String? _selectedSubscriptionType = 'monthly';
   String? _logoUrl;
-  File? _selectedLogoFile;
+  XFile? _selectedLogoFile;
+  Uint8List? _selectedLogoBytes;
   bool _isUploadingLogo = false;
 
   @override
@@ -58,8 +60,12 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
 
       if (pickedFile == null) return;
 
+      // Leer bytes para vista previa
+      final fileBytes = await pickedFile.readAsBytes();
+
       setState(() {
-        _selectedLogoFile = File(pickedFile.path);
+        _selectedLogoFile = pickedFile;
+        _selectedLogoBytes = fileBytes;
         _isUploadingLogo = true;
       });
 
@@ -71,7 +77,7 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
 
           await _supabase.storage
               .from('company-logos')
-              .upload(filePath, _selectedLogoFile!);
+              .upload(filePath, fileBytes);
 
           final publicUrl = _supabase.storage
               .from('company-logos')
@@ -163,9 +169,12 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
             final fileName = 'logo_${tempCompany.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
             final filePath = 'company-logos/$fileName';
 
+            // Leer bytes del archivo
+            final fileBytes = await _selectedLogoFile!.readAsBytes();
+
             await _supabase.storage
                 .from('company-logos')
-                .upload(filePath, _selectedLogoFile!);
+                .upload(filePath, fileBytes);
 
             finalLogoUrl = _supabase.storage
                 .from('company-logos')
@@ -251,9 +260,12 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
             final fileName = 'logo_${widget.company!.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
             final filePath = 'company-logos/$fileName';
 
+            // Leer bytes del archivo
+            final fileBytes = await _selectedLogoFile!.readAsBytes();
+
             await _supabase.storage
                 .from('company-logos')
-                .upload(filePath, _selectedLogoFile!);
+                .upload(filePath, fileBytes);
 
             finalLogoUrl = _supabase.storage
                 .from('company-logos')
@@ -345,7 +357,7 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           // Logo de la empresa
-                          if (_logoUrl != null || _selectedLogoFile != null)
+                          if (_logoUrl != null || _selectedLogoBytes != null)
                             Stack(
                               children: [
                                 CircleAvatar(
@@ -353,10 +365,10 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
                                   backgroundColor: Colors.grey[200],
                                   backgroundImage: _logoUrl != null
                                       ? NetworkImage(_logoUrl!)
-                                      : (_selectedLogoFile != null
-                                          ? FileImage(_selectedLogoFile!)
-                                          : null) as ImageProvider?,
-                                  child: _logoUrl == null && _selectedLogoFile == null
+                                      : (_selectedLogoBytes != null
+                                          ? MemoryImage(_selectedLogoBytes!)
+                                          : null),
+                                  child: _logoUrl == null && _selectedLogoBytes == null
                                       ? const Icon(Icons.business, size: 50)
                                       : null,
                                 ),
@@ -389,7 +401,7 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
                             child: OutlinedButton.icon(
                               onPressed: _isUploadingLogo ? null : _pickLogo,
                               icon: const Icon(Icons.image),
-                              label: Text(_logoUrl != null || _selectedLogoFile != null
+                              label: Text(_logoUrl != null || _selectedLogoBytes != null
                                   ? 'Cambiar Logo'
                                   : 'Seleccionar Logo'),
                               style: OutlinedButton.styleFrom(
