@@ -49,6 +49,9 @@ class CompanyService {
     String? address,
     String? phone,
     String? email,
+    String? logoUrl,
+    String subscriptionType = 'monthly',
+    double subscriptionPrice = 250.0,
   }) async {
     try {
       final response = await _supabase
@@ -59,6 +62,9 @@ class CompanyService {
             'address': address,
             'phone': phone,
             'email': email,
+            'logo_url': logoUrl,
+            'subscription_type': subscriptionType,
+            'subscription_price': subscriptionPrice,
             'is_active': true,
           })
           .select()
@@ -79,6 +85,9 @@ class CompanyService {
     String? email,
     String? adminEmail,
     required String adminPassword,
+    String? logoUrl,
+    String subscriptionType = 'monthly',
+    double subscriptionPrice = 250.0,
   }) async {
     try {
       // 1. Crear la empresa
@@ -88,6 +97,9 @@ class CompanyService {
         address: address,
         phone: phone,
         email: email,
+        logoUrl: logoUrl,
+        subscriptionType: subscriptionType,
+        subscriptionPrice: subscriptionPrice,
       );
 
       // 2. Si hay email de admin, crear el usuario administrador
@@ -131,6 +143,8 @@ class CompanyService {
     String? phone,
     String? email,
     String? logoUrl,
+    String? subscriptionType,
+    double? subscriptionPrice,
   }) async {
     try {
       final Map<String, dynamic> data = {};
@@ -140,6 +154,8 @@ class CompanyService {
       if (phone != null) data['phone'] = phone;
       if (email != null) data['email'] = email;
       if (logoUrl != null) data['logo_url'] = logoUrl;
+      if (subscriptionType != null) data['subscription_type'] = subscriptionType;
+      if (subscriptionPrice != null) data['subscription_price'] = subscriptionPrice;
 
       final response = await _supabase
           .from('companies')
@@ -151,6 +167,28 @@ class CompanyService {
       return CompanyModel.fromJson(response);
     } catch (e) {
       throw Exception('Error al actualizar empresa: $e');
+    }
+  }
+
+  // Subir logo de empresa (usando bytes)
+  Future<String> uploadCompanyLogo(String companyId, List<int> fileBytes) async {
+    try {
+      final fileName = 'logo_$companyId${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final filePathStorage = 'company-logos/$fileName';
+      
+      // Subir a Supabase Storage
+      await _supabase.storage
+          .from('company-logos')
+          .upload(filePathStorage, fileBytes);
+
+      // Obtener URL pública
+      final publicUrl = _supabase.storage
+          .from('company-logos')
+          .getPublicUrl(filePathStorage);
+
+      return publicUrl;
+    } catch (e) {
+      throw Exception('Error al subir logo: $e');
     }
   }
 

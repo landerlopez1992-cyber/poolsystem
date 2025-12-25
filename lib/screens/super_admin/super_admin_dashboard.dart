@@ -232,19 +232,71 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                         margin: const EdgeInsets.only(bottom: 12),
                         color: Colors.white,
                         child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: const Color(0xFF4CAF50),
-                            child: Text(
-                              company.name[0].toUpperCase(),
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                          ),
-                          title: Text(
-                            company.name,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF2C2C2C),
-                            ),
+                          leading: company.logoUrl != null
+                              ? CircleAvatar(
+                                  backgroundImage: NetworkImage(company.logoUrl!),
+                                  backgroundColor: Colors.grey[200],
+                                )
+                              : CircleAvatar(
+                                  backgroundColor: const Color(0xFF4CAF50),
+                                  child: Text(
+                                    company.name[0].toUpperCase(),
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                          title: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  company.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF2C2C2C),
+                                  ),
+                                ),
+                              ),
+                              // Icono de suscripción
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: company.subscriptionType == 'lifetime'
+                                      ? const Color(0xFF9C27B0).withOpacity(0.1)
+                                      : const Color(0xFF2196F3).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: company.subscriptionType == 'lifetime'
+                                        ? const Color(0xFF9C27B0)
+                                        : const Color(0xFF2196F3),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      company.subscriptionType == 'lifetime'
+                                          ? Icons.all_inclusive
+                                          : Icons.calendar_month,
+                                      size: 14,
+                                      color: company.subscriptionType == 'lifetime'
+                                          ? const Color(0xFF9C27B0)
+                                          : const Color(0xFF2196F3),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      company.subscriptionPriceFormatted,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: company.subscriptionType == 'lifetime'
+                                            ? const Color(0xFF9C27B0)
+                                            : const Color(0xFF2196F3),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                           subtitle: Text(
                             company.email ?? 'Sin email',
@@ -442,19 +494,71 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                         margin: const EdgeInsets.only(bottom: 12),
                         color: Colors.white,
                         child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: const Color(0xFF4CAF50),
-                            child: Text(
-                              company.name[0].toUpperCase(),
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                          ),
-                          title: Text(
-                            company.name,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF2C2C2C),
-                            ),
+                          leading: company.logoUrl != null
+                              ? CircleAvatar(
+                                  backgroundImage: NetworkImage(company.logoUrl!),
+                                  backgroundColor: Colors.grey[200],
+                                )
+                              : CircleAvatar(
+                                  backgroundColor: const Color(0xFF4CAF50),
+                                  child: Text(
+                                    company.name[0].toUpperCase(),
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                          title: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  company.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF2C2C2C),
+                                  ),
+                                ),
+                              ),
+                              // Icono de suscripción
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: company.subscriptionType == 'lifetime'
+                                      ? const Color(0xFF9C27B0).withOpacity(0.1)
+                                      : const Color(0xFF2196F3).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: company.subscriptionType == 'lifetime'
+                                        ? const Color(0xFF9C27B0)
+                                        : const Color(0xFF2196F3),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      company.subscriptionType == 'lifetime'
+                                          ? Icons.all_inclusive
+                                          : Icons.calendar_month,
+                                      size: 14,
+                                      color: company.subscriptionType == 'lifetime'
+                                          ? const Color(0xFF9C27B0)
+                                          : const Color(0xFF2196F3),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      company.subscriptionPriceFormatted,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: company.subscriptionType == 'lifetime'
+                                            ? const Color(0xFF9C27B0)
+                                            : const Color(0xFF2196F3),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                           subtitle: Text(
                             company.email ?? 'Sin email',

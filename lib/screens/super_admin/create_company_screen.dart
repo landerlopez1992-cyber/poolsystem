@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import '../../services/company_service.dart';
 import '../../models/company_model.dart';
 import '../../widgets/super_admin_layout.dart';
+import '../../services/supabase_service.dart';
 
 class CreateCompanyScreen extends StatefulWidget {
   final CompanyModel? company; // Si se proporciona, es edición
@@ -21,8 +24,13 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _companyService = CompanyService();
+  final _supabase = SupabaseService.client;
   bool _isLoading = false;
   bool _obscurePassword = true;
+  String? _selectedSubscriptionType = 'monthly';
+  String? _logoUrl;
+  File? _selectedLogoFile;
+  bool _isUploadingLogo = false;
 
   @override
   void initState() {
@@ -33,6 +41,71 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
       _addressController.text = widget.company!.address ?? '';
       _phoneController.text = widget.company!.phone ?? '';
       _emailController.text = widget.company!.email ?? '';
+      _selectedSubscriptionType = widget.company!.subscriptionType;
+      _logoUrl = widget.company!.logoUrl;
+    }
+  }
+
+  Future<void> _pickLogo() async {
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+
+      if (pickedFile == null) return;
+
+      setState(() {
+        _selectedLogoFile = File(pickedFile.path);
+        _isUploadingLogo = true;
+      });
+
+      // Si es edición, subir logo inmediatamente
+      if (widget.company != null && _selectedLogoFile != null) {
+        try {
+          final fileName = 'logo_${widget.company!.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+          final filePath = 'company-logos/$fileName';
+          final fileBytes = await _selectedLogoFile!.readAsBytes();
+
+          await _supabase.storage
+              .from('company-logos')
+              .upload(filePath, fileBytes);
+
+          final publicUrl = _supabase.storage
+              .from('company-logos')
+              .getPublicUrl(filePath);
+
+          setState(() {
+            _logoUrl = publicUrl;
+            _isUploadingLogo = false;
+          });
+        } catch (e) {
+          setState(() {
+            _isUploadingLogo = false;
+          });
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error al subir logo: $e')),
+            );
+          }
+        }
+      } else {
+        setState(() {
+          _isUploadingLogo = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isUploadingLogo = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al seleccionar imagen: $e')),
+        );
+      }
     }
   }
 
@@ -57,27 +130,112 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
     });
 
     try {
+      String? finalLogoUrl = _logoUrl;
+      final subscriptionPrice = _selectedSubscriptionType == 'monthly' ? 250.0 : 5000.0;
+
       if (widget.company == null) {
-        // Crear nueva empresa con usuario admin
-        await _companyService.createCompanyWithAdmin(
-          name: _nameController.text.trim(),
-          description: _descriptionController.text.trim().isEmpty
-              ? null
-              : _descriptionController.text.trim(),
-          address: _addressController.text.trim().isEmpty
-              ? null
-              : _addressController.text.trim(),
-          phone: _phoneController.text.trim().isEmpty
-              ? null
-              : _phoneController.text.trim(),
-          email: _emailController.text.trim().isEmpty
-              ? null
-              : _emailController.text.trim(),
-          adminEmail: _emailController.text.trim().isEmpty
-              ? null
-              : _emailController.text.trim(),
-          adminPassword: _passwordController.text,
-        );
+        // Si hay un archivo nuevo, subirlo primero
+        if (_selectedLogoFile != null) {
+          setState(() {
+            _isUploadingLogo = true;
+          });
+          try {
+            // Crear empresa primero para obtener el ID
+            final tempCompany = await _companyService.createCompany(
+              name: _nameController.text.trim(),
+              description: _descriptionController.text.trim().isEmpty
+                  ? null
+                  : _descriptionController.text.trim(),
+              address: _addressController.text.trim().isEmpty
+                  ? null
+                  : _addressController.text.trim(),
+              phone: _phoneController.text.trim().isEmpty
+                  ? null
+                  : _phoneController.text.trim(),
+              email: _emailController.text.trim().isEmpty
+                  ? null
+                  : _emailController.text.trim(),
+              logoUrl: null, // Se subirá después
+              subscriptionType: _selectedSubscriptionType!,
+              subscriptionPrice: subscriptionPrice,
+            );
+
+            // Subir logo
+            final fileName = 'logo_${tempCompany.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+            final filePath = 'company-logos/$fileName';
+            final fileBytes = await _selectedLogoFile!.readAsBytes();
+
+            await _supabase.storage
+                .from('company-logos')
+                .upload(filePath, fileBytes);
+
+            finalLogoUrl = _supabase.storage
+                .from('company-logos')
+                .getPublicUrl(filePath);
+
+            // Actualizar empresa con logo
+            await _companyService.updateCompany(
+              companyId: tempCompany.id,
+              logoUrl: finalLogoUrl,
+            );
+
+            // Crear usuario admin
+            final adminEmail = _emailController.text.trim();
+            if (adminEmail.isNotEmpty) {
+              final authResponse = await _supabase.auth.signUp(
+                email: adminEmail,
+                password: _passwordController.text,
+              );
+
+              if (authResponse.user != null) {
+                final userId = authResponse.user!.id;
+                await _supabase.from('users').insert({
+                  'id': userId,
+                  'email': adminEmail,
+                  'full_name': _nameController.text.trim(),
+                  'role': 'admin',
+                  'company_id': tempCompany.id,
+                  'phone': _phoneController.text.trim().isEmpty
+                      ? null
+                      : _phoneController.text.trim(),
+                  'is_active': true,
+                });
+              }
+            }
+          } catch (e) {
+            setState(() {
+              _isUploadingLogo = false;
+            });
+            throw Exception('Error al crear empresa: $e');
+          }
+        } else {
+          // Crear nueva empresa con usuario admin sin logo
+          await _companyService.createCompanyWithAdmin(
+            name: _nameController.text.trim(),
+            description: _descriptionController.text.trim().isEmpty
+                ? null
+                : _descriptionController.text.trim(),
+            address: _addressController.text.trim().isEmpty
+                ? null
+                : _addressController.text.trim(),
+            phone: _phoneController.text.trim().isEmpty
+                ? null
+                : _phoneController.text.trim(),
+            email: _emailController.text.trim().isEmpty
+                ? null
+                : _emailController.text.trim(),
+            adminEmail: _emailController.text.trim().isEmpty
+                ? null
+                : _emailController.text.trim(),
+            adminPassword: _passwordController.text,
+            logoUrl: finalLogoUrl,
+            subscriptionType: _selectedSubscriptionType!,
+            subscriptionPrice: subscriptionPrice,
+          );
+        }
+        setState(() {
+          _isUploadingLogo = false;
+        });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Empresa creada exitosamente')),
@@ -86,6 +244,31 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
         }
       } else {
         // Actualizar empresa existente
+        // Si hay un archivo nuevo, subirlo primero
+        if (_selectedLogoFile != null && finalLogoUrl == null) {
+          setState(() {
+            _isUploadingLogo = true;
+          });
+          try {
+            final fileName = 'logo_${widget.company!.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+            final filePath = 'company-logos/$fileName';
+            final fileBytes = await _selectedLogoFile!.readAsBytes();
+
+            await _supabase.storage
+                .from('company-logos')
+                .upload(filePath, fileBytes);
+
+            finalLogoUrl = _supabase.storage
+                .from('company-logos')
+                .getPublicUrl(filePath);
+          } catch (e) {
+            setState(() {
+              _isUploadingLogo = false;
+            });
+            throw Exception('Error al subir logo: $e');
+          }
+        }
+        
         await _companyService.updateCompany(
           companyId: widget.company!.id,
           name: _nameController.text.trim(),
@@ -101,7 +284,13 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
           email: _emailController.text.trim().isEmpty
               ? null
               : _emailController.text.trim(),
+          logoUrl: finalLogoUrl,
+          subscriptionType: _selectedSubscriptionType,
+          subscriptionPrice: subscriptionPrice,
         );
+        setState(() {
+          _isUploadingLogo = false;
+        });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Empresa actualizada exitosamente')),
@@ -158,6 +347,60 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
+                          // Logo de la empresa
+                          if (_logoUrl != null || _selectedLogoFile != null)
+                            Stack(
+                              children: [
+                                CircleAvatar(
+                                  radius: 50,
+                                  backgroundColor: Colors.grey[200],
+                                  backgroundImage: _logoUrl != null
+                                      ? NetworkImage(_logoUrl!)
+                                      : (_selectedLogoFile != null
+                                          ? FileImage(_selectedLogoFile!)
+                                          : null) as ImageProvider?,
+                                  child: _logoUrl == null && _selectedLogoFile == null
+                                      ? const Icon(Icons.business, size: 50)
+                                      : null,
+                                ),
+                                if (_isUploadingLogo)
+                                  Positioned.fill(
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.black54,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Center(
+                                        child: CircularProgressIndicator(
+                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            )
+                          else
+                            CircleAvatar(
+                              radius: 50,
+                              backgroundColor: Colors.grey[200],
+                              child: const Icon(Icons.business, size: 50),
+                            ),
+                          const SizedBox(height: 16),
+                          // Botón para seleccionar logo
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: _isUploadingLogo ? null : _pickLogo,
+                              icon: const Icon(Icons.image),
+                              label: Text(_logoUrl != null || _selectedLogoFile != null
+                                  ? 'Cambiar Logo'
+                                  : 'Seleccionar Logo'),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
                           // Nombre - NO estirado, ancho controlado
                           SizedBox(
                             width: double.infinity,
@@ -284,6 +527,51 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
                               ),
                             ),
                           ],
+                          const SizedBox(height: 16),
+                          // Selector de Suscripción - NO estirado, ancho controlado
+                          SizedBox(
+                            width: double.infinity,
+                            child: DropdownButtonFormField<String>(
+                              value: _selectedSubscriptionType,
+                              decoration: const InputDecoration(
+                                labelText: 'Tipo de Suscripción *',
+                                border: OutlineInputBorder(),
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'monthly',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.calendar_month, size: 20),
+                                      SizedBox(width: 8),
+                                      Text('Mensual - \$250/mes'),
+                                    ],
+                                  ),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'lifetime',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.all_inclusive, size: 20),
+                                      SizedBox(width: 8),
+                                      Text('Por Vida - \$5,000'),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedSubscriptionType = value;
+                                });
+                              },
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Selecciona un tipo de suscripción';
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
                         ],
                       ),
                     ),

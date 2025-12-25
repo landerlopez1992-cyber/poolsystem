@@ -6,6 +6,8 @@ class CompanyModel {
   final String? phone;
   final String? email;
   final String? logoUrl;
+  final String subscriptionType; // 'monthly' o 'lifetime'
+  final double subscriptionPrice;
   final DateTime createdAt;
   final DateTime updatedAt;
   final bool isActive;
@@ -20,6 +22,8 @@ class CompanyModel {
     this.phone,
     this.email,
     this.logoUrl,
+    this.subscriptionType = 'monthly',
+    this.subscriptionPrice = 250.0,
     required this.createdAt,
     required this.updatedAt,
     this.isActive = true,
@@ -36,6 +40,8 @@ class CompanyModel {
       phone: json['phone'] as String?,
       email: json['email'] as String?,
       logoUrl: json['logo_url'] as String?,
+      subscriptionType: json['subscription_type'] as String? ?? 'monthly',
+      subscriptionPrice: (json['subscription_price'] as num?)?.toDouble() ?? 250.0,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
       isActive: json['is_active'] as bool? ?? true,
@@ -53,10 +59,28 @@ class CompanyModel {
       'phone': phone,
       'email': email,
       'logo_url': logoUrl,
+      'subscription_type': subscriptionType,
+      'subscription_price': subscriptionPrice,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
       'is_active': isActive,
     };
+  }
+
+  // Helpers para suscripción
+  String get subscriptionTypeLabel {
+    switch (subscriptionType) {
+      case 'monthly':
+        return 'Mensual';
+      case 'lifetime':
+        return 'Por Vida';
+      default:
+        return 'Mensual';
+    }
+  }
+
+  String get subscriptionPriceFormatted {
+    return '\$${subscriptionPrice.toStringAsFixed(0)}';
   }
 }
 
