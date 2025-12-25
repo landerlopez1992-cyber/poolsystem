@@ -171,15 +171,42 @@ class CompanyService {
   }
 
   // Subir logo de empresa (usando bytes)
+  // NOTA: Este método está deprecado, usar StorageHelper en su lugar
   Future<String> uploadCompanyLogo(String companyId, List<int> fileBytes) async {
     try {
       final fileName = 'logo_$companyId${DateTime.now().millisecondsSinceEpoch}.jpg';
       final filePathStorage = 'company-logos/$fileName';
       
-      // Subir a Supabase Storage
-      await _supabase.storage
-          .from('company-logos')
-          .upload(filePathStorage, fileBytes);
+      // Convertir List<int> a Uint8List
+      final uint8List = Uint8List.fromList(fileBytes);
+      
+      // Subir a Supabase Storage usando el método correcto
+      // En mobile, necesitamos convertir a File
+      if (!kIsWeb) {
+        final tempFile = File.fromRawPath(uint8List);
+        await _supabase.storage
+            .from('company-logos')
+            .upload(filePathStorage, tempFile);
+      } else {
+        // En web, usar HTTP directo (similar a StorageHelper)
+        final url = '${AppConfig.supabaseUrl}/storage/v1/object/company-logos/$filePathStorage';
+        final session = _supabase.auth.currentSession;
+        final token = session?.accessToken ?? '';
+        
+        final response = await http.post(
+          Uri.parse(url),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'image/jpeg',
+            'apikey': AppConfig.supabaseAnonKey,
+          },
+          body: uint8List,
+        );
+
+        if (response.statusCode != 200 && response.statusCode != 201) {
+          throw Exception('Error al subir: ${response.statusCode} - ${response.body}');
+        }
+      }
 
       // Obtener URL pública
       final publicUrl = _supabase.storage
