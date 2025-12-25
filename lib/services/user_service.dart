@@ -178,7 +178,7 @@ class UserService {
                 print('⚠️ Función no disponible, intentando INSERT directo: $functionError');
                 
                 // Si la función no existe, intentar INSERT directo
-                final newUser = await _supabase
+                final newUserData = await _supabase
                     .from('users')
                     .insert({
                       'id': userId,
@@ -194,7 +194,7 @@ class UserService {
                     .single();
                 
                 print('✅ Usuario creado exitosamente en public.users');
-                existingUser = newUser;
+                existingUser = UserModel.fromJson(newUserData);
               }
             } catch (insertError) {
               print('❌ Error al INSERTAR usuario: $insertError');
@@ -209,8 +209,8 @@ class UserService {
           throw Exception('Usuario no encontrado en la base de datos. userId: $userId. Error: $e');
         }
       } else {
-        print('   - Email: ${existingUser['email']}');
-        print('   - Role: ${existingUser['role']}');
+        print('   - Email: ${existingUser?.email}');
+        print('   - Role: ${existingUser?.role}');
       }
 
       print('💾 Ejecutando UPDATE en tabla users...');
