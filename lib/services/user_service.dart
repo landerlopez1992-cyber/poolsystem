@@ -86,6 +86,7 @@ class UserService {
   // Obtener usuario por ID
   Future<UserModel?> getUserById(String userId) async {
     try {
+      print('🔍 UserService.getUserById - Buscando usuario: $userId');
       final response = await _supabase
           .from('users')
           .select()
@@ -93,11 +94,15 @@ class UserService {
           .maybeSingle();
 
       if (response == null) {
+        print('⚠️ Usuario no encontrado en users table: $userId');
         return null;
       }
 
-      return UserModel.fromJson(response);
+      final user = UserModel.fromJson(response);
+      print('✅ Usuario encontrado: ${user.email}, Avatar: ${user.avatarUrl}');
+      return user;
     } catch (e) {
+      print('❌ Error al obtener usuario por ID: $e');
       return null;
     }
   }

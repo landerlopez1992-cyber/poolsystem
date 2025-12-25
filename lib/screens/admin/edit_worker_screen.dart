@@ -54,15 +54,30 @@ class _EditWorkerScreenState extends State<EditWorkerScreen> {
   
   Future<void> _loadWorkerUser() async {
     try {
+      print('🔄 EditWorkerScreen._loadWorkerUser - Cargando usuario para worker: ${widget.worker.userId}');
       final user = await _userService.getUserById(widget.worker.userId);
       if (user != null && mounted) {
+        print('✅ Usuario cargado. Avatar URL: ${user.avatarUrl}');
         setState(() {
           _avatarUrl = user.avatarUrl;
         });
+      } else {
+        print('⚠️ Usuario no encontrado o sin avatar. Usando avatar del widget: ${widget.workerUser?.avatarUrl}');
+        // Si no se encontró el usuario pero tenemos uno en el widget, usarlo
+        if (widget.workerUser?.avatarUrl != null && mounted) {
+          setState(() {
+            _avatarUrl = widget.workerUser!.avatarUrl;
+          });
+        }
       }
     } catch (e) {
-      // Error silencioso, usar el avatar del widget
-      print('Error al cargar usuario: $e');
+      print('❌ Error al cargar usuario: $e');
+      // Si hay error pero tenemos avatar en el widget, usarlo
+      if (widget.workerUser?.avatarUrl != null && mounted) {
+        setState(() {
+          _avatarUrl = widget.workerUser!.avatarUrl;
+        });
+      }
     }
   }
 
