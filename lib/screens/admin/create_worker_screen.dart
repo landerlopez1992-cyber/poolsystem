@@ -185,6 +185,55 @@ class _CreateWorkerScreenState extends State<CreateWorkerScreen> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
+                          // Selector de Avatar
+                          Center(
+                            child: GestureDetector(
+                              onTap: _pickAvatar,
+                              child: Stack(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 50,
+                                    backgroundColor: Colors.grey[300],
+                                    backgroundImage: _selectedAvatarBytes != null
+                                        ? MemoryImage(_selectedAvatarBytes!)
+                                        : null,
+                                    child: _selectedAvatarBytes == null
+                                        ? const Icon(
+                                            Icons.person,
+                                            size: 50,
+                                            color: Colors.grey,
+                                          )
+                                        : null,
+                                  ),
+                                  Positioned(
+                                    bottom: 0,
+                                    right: 0,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFFFF9800),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.camera_alt,
+                                        size: 20,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Foto de Perfil',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
                           SizedBox(
                             width: double.infinity,
                             child: TextFormField(
