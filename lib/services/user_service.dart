@@ -168,7 +168,7 @@ class UserService {
                 
                 if (functionResult != null) {
                   print('✅ Usuario creado usando función create_user_for_worker');
-                  existingUser = UserModel.fromJson(functionResult);
+                  existingUser = UserModel.fromJson(functionResult as Map<String, dynamic>);
                 }
               } catch (functionError) {
                 print('⚠️ Función no disponible, intentando INSERT directo: $functionError');
