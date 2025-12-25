@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';
 import '../../services/user_service.dart';
-import '../../widgets/super_admin_layout.dart';
+import '../../widgets/admin_layout.dart';
 import '../../services/supabase_service.dart';
 import '../../utils/storage_helper.dart';
 
@@ -140,7 +140,7 @@ class _CreateAdminUserScreenState extends State<CreateAdminUserScreen> {
   void _handleSidebarNavigation(int index) {
     // Navegar al dashboard con el índice correcto
     Navigator.of(context).pushNamedAndRemoveUntil(
-      '/super-admin',
+      '/admin',
       (route) => false,
       arguments: index,
     );
@@ -151,9 +151,9 @@ class _CreateAdminUserScreenState extends State<CreateAdminUserScreen> {
     // Ancho máximo para el formulario (responsive)
     final maxWidth = MediaQuery.of(context).size.width > 600 ? 500.0 : double.infinity;
     
-    return SuperAdminLayout(
+    return AdminLayout(
       title: 'Crear Administrador',
-      selectedIndex: 1, // Empresas
+      selectedIndex: 3, // Administradores
       onItemSelected: _handleSidebarNavigation,
       child: Center(
         child: SingleChildScrollView(

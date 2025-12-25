@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';
 import '../../services/worker_service.dart';
-import '../../widgets/super_admin_layout.dart';
+import '../../widgets/admin_layout.dart';
 import '../../services/supabase_service.dart';
 import '../../utils/storage_helper.dart';
 
@@ -150,7 +150,7 @@ class _CreateWorkerScreenState extends State<CreateWorkerScreen> {
   void _handleSidebarNavigation(int index) {
     // Navegar al dashboard con el índice correcto
     Navigator.of(context).pushNamedAndRemoveUntil(
-      '/super-admin',
+      '/admin',
       (route) => false,
       arguments: index,
     );
@@ -161,9 +161,9 @@ class _CreateWorkerScreenState extends State<CreateWorkerScreen> {
     // Ancho máximo para el formulario (responsive)
     final maxWidth = MediaQuery.of(context).size.width > 600 ? 500.0 : double.infinity;
     
-    return SuperAdminLayout(
+    return AdminLayout(
       title: 'Crear Técnico de Piscinas',
-      selectedIndex: 1, // Empresas
+      selectedIndex: 2, // Trabajadores
       onItemSelected: _handleSidebarNavigation,
       child: Center(
         child: SingleChildScrollView(

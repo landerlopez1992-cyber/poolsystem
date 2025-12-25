@@ -6,7 +6,7 @@ class AdminSidebar extends StatelessWidget {
   final Function(int) onItemSelected;
   final AuthService _authService = AuthService();
 
-  const AdminSidebar({
+  AdminSidebar({
     super.key,
     required this.selectedIndex,
     required this.onItemSelected,

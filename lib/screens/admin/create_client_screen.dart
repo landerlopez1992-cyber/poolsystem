@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/client_service.dart';
+import '../../widgets/admin_layout.dart';
 
 class CreateClientScreen extends StatefulWidget {
   final String companyId;
@@ -88,19 +89,25 @@ class _CreateClientScreenState extends State<CreateClientScreen> {
     }
   }
 
+  void _handleSidebarNavigation(int index) {
+    // Navegar al dashboard con el índice correcto
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      '/admin',
+      (route) => false,
+      arguments: index,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Ancho máximo para el formulario (responsive)
     final maxWidth = MediaQuery.of(context).size.width > 600 ? 500.0 : double.infinity;
     
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      appBar: AppBar(
-        title: const Text('Crear Cliente'),
-        backgroundColor: const Color(0xFF37474F),
-        foregroundColor: Colors.white,
-      ),
-      body: Center(
+    return AdminLayout(
+      title: 'Crear Cliente',
+      selectedIndex: 1, // Clientes
+      onItemSelected: _handleSidebarNavigation,
+      child: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: ConstrainedBox(
@@ -248,5 +255,4 @@ class _CreateClientScreenState extends State<CreateClientScreen> {
       ),
     );
   }
-}
 
