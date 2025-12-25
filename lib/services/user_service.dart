@@ -83,6 +83,25 @@ class UserService {
     }
   }
 
+  // Obtener usuario por ID
+  Future<UserModel?> getUserById(String userId) async {
+    try {
+      final response = await _supabase
+          .from('users')
+          .select()
+          .eq('id', userId)
+          .maybeSingle();
+
+      if (response == null) {
+        return null;
+      }
+
+      return UserModel.fromJson(response);
+    } catch (e) {
+      return null;
+    }
+  }
+
   // Actualizar usuario
   Future<UserModel> updateUser({
     required String userId,
