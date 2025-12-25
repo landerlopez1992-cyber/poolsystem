@@ -84,12 +84,17 @@ class _SupportScreenState extends State<SupportScreen> {
                     ? _buildEmptyState()
                     : RefreshIndicator(
                         onRefresh: _loadData,
-                        child: ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: _filteredTickets.length,
-                          itemBuilder: (context, index) {
-                            return _buildTicketCard(_filteredTickets[index]);
-                          },
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 1200),
+                            child: ListView.builder(
+                              padding: const EdgeInsets.all(16),
+                              itemCount: _filteredTickets.length,
+                              itemBuilder: (context, index) {
+                                return _buildTicketCard(_filteredTickets[index]);
+                              },
+                            ),
+                          ),
                         ),
                       ),
           ),
@@ -116,54 +121,57 @@ class _SupportScreenState extends State<SupportScreen> {
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          _buildStatItem('Total', _stats!['total'].toString(), Colors.grey),
-          const SizedBox(width: 16),
-          _buildStatItem('Abiertos', _stats!['open'].toString(), const Color(0xFF2196F3)),
-          const SizedBox(width: 16),
-          _buildStatItem('En Progreso', _stats!['in_progress'].toString(), const Color(0xFFFF9800)),
-          const SizedBox(width: 16),
-          _buildStatItem('Cerrados', _stats!['closed'].toString(), const Color(0xFF4CAF50)),
-          if (_stats!['urgent'] > 0) ...[
-            const SizedBox(width: 16),
-            _buildStatItem('Urgentes', _stats!['urgent'].toString(), const Color(0xFFDC2626)),
-          ],
-        ],
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            alignment: WrapAlignment.center,
+            children: [
+              _buildStatItem('Total', _stats!['total'].toString(), Colors.grey),
+              _buildStatItem('Abiertos', _stats!['open'].toString(), const Color(0xFF2196F3)),
+              _buildStatItem('En Progreso', _stats!['in_progress'].toString(), const Color(0xFFFF9800)),
+              _buildStatItem('Cerrados', _stats!['closed'].toString(), const Color(0xFF4CAF50)),
+              if (_stats!['urgent'] > 0)
+                _buildStatItem('Urgentes', _stats!['urgent'].toString(), const Color(0xFFDC2626)),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildStatItem(String label, String value, Color color) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withOpacity(0.3)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
+    return Container(
+      width: 150, // Ancho fijo controlado
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: color,
             ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey[600],
             ),
-          ],
-        ),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }
@@ -172,34 +180,33 @@ class _SupportScreenState extends State<SupportScreen> {
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          const Text(
-            'Filtrar por:',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF2C2C2C),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              const Text(
+                'Filtrar por:',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF2C2C2C),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Wrap(
+                spacing: 8,
                 children: [
                   _buildFilterChip('all', 'Todos'),
-                  const SizedBox(width: 8),
                   _buildFilterChip('open', 'Abiertos'),
-                  const SizedBox(width: 8),
                   _buildFilterChip('in_progress', 'En Progreso'),
-                  const SizedBox(width: 8),
                   _buildFilterChip('closed', 'Cerrados'),
                 ],
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

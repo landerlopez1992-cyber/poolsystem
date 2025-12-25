@@ -115,13 +115,15 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
           child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: maxWidth),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Card(
                   color: Colors.white,
                   child: Padding(
                     padding: const EdgeInsets.all(24),
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Header con estado y prioridad
@@ -248,38 +250,42 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                 const SizedBox(height: 16),
                 // Botones de acción
                 if (_ticket.status != 'closed')
-                  Row(
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       if (_ticket.status == 'open')
-                        Expanded(
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: _isLoading
-                                  ? null
-                                  : () => _updateStatus('in_progress'),
-                              icon: const Icon(Icons.play_arrow),
-                              label: const Text('Marcar en Progreso'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFFF9800),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: _isLoading
+                                ? null
+                                : () => _updateStatus('in_progress'),
+                            icon: const Icon(Icons.play_arrow),
+                            label: const Text('Marcar en Progreso'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFFF9800),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
                             ),
                           ),
                         ),
-                      if (_ticket.status == 'open') const SizedBox(width: 12),
-                      Expanded(
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: _isLoading ? null : _confirmCloseTicket,
-                            icon: const Icon(Icons.close),
-                            label: const Text('Cerrar Ticket'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFDC2626),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
+                      if (_ticket.status == 'open') const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _isLoading ? null : _confirmCloseTicket,
+                          icon: const Icon(Icons.close),
+                          label: const Text('Cerrar Ticket'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFDC2626),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
                         ),
