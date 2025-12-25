@@ -1,0 +1,110 @@
+---
+alwaysApply: true
+---
+
+# 🎨 REGLAS DE DISEÑO - POOL SYSTEM
+
+## 🚫 PROHIBICIONES CRÍTICAS DE DISEÑO
+
+### ❌ NUNCA Hacer Esto:
+
+1. **NO usar `CrossAxisAlignment.stretch` en Column sin controlar el ancho**
+   - ❌ MAL: `Column(crossAxisAlignment: CrossAxisAlignment.stretch)`
+   - ✅ BIEN: `Column(crossAxisAlignment: CrossAxisAlignment.center)` + `SizedBox(width: double.infinity)` en elementos específicos
+
+2. **NO dejar botones y campos de texto estirados de lado a lado sin control**
+   - ❌ MAL: `ElevatedButton()` dentro de Column con `stretch`
+   - ✅ BIEN: `SizedBox(width: double.infinity, child: ElevatedButton())` o usar `ConstrainedBox` con `maxWidth`
+
+3. **NO crear formularios que ocupen todo el ancho de la pantalla sin límites**
+   - ❌ MAL: Formularios sin `ConstrainedBox` o `maxWidth`
+   - ✅ BIEN: Usar `ConstrainedBox(maxWidth: 400)` o similar para tablets/desktop
+
+## ✅ REGLAS OBLIGATORIAS
+
+### 1. **Contenedores y Formularios**
+- SIEMPRE usar `ConstrainedBox` con `maxWidth` para formularios
+- En móvil: `maxWidth: double.infinity` está bien
+- En tablet/desktop: `maxWidth: 400-500` para evitar estiramiento excesivo
+
+### 2. **Botones**
+- SIEMPRE envolver en `SizedBox(width: double.infinity)` si se quiere ancho completo
+- NUNCA dejar que se estiren automáticamente sin control
+- Usar `padding` horizontal si se quiere ancho limitado
+
+### 3. **Campos de Texto (TextFormField)**
+- SIEMPRE envolver en `SizedBox(width: double.infinity)` si se quiere ancho completo
+- O usar `ConstrainedBox` para controlar el ancho máximo
+
+### 4. **Cards y Contenedores**
+- Usar `padding` adecuado (mínimo 16-24px)
+- NO estirar cards de lado a lado sin márgenes
+- Usar `margin` para separación entre elementos
+
+## 📐 Patrones de Diseño Correctos
+
+### Ejemplo 1: Formulario con Ancho Controlado
+```dart
+ConstrainedBox(
+  constraints: BoxConstraints(maxWidth: 400),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.center, // NO stretch
+    children: [
+      SizedBox(
+        width: double.infinity, // Control explícito
+        child: TextFormField(...),
+      ),
+      SizedBox(
+        width: double.infinity, // Control explícito
+        child: ElevatedButton(...),
+      ),
+    ],
+  ),
+)
+```
+
+### Ejemplo 2: Botón con Ancho Controlado
+```dart
+SizedBox(
+  width: double.infinity, // Ancho completo pero controlado
+  child: ElevatedButton(...),
+)
+```
+
+### Ejemplo 3: Formulario Responsive
+```dart
+final maxWidth = MediaQuery.of(context).size.width > 600 
+    ? 400.0 
+    : double.infinity;
+
+ConstrainedBox(
+  constraints: BoxConstraints(maxWidth: maxWidth),
+  child: Form(...),
+)
+```
+
+## 🔍 Checklist Antes de Crear Pantallas/Componentes
+
+Antes de crear cualquier pantalla o componente nuevo, VERIFICAR:
+
+- [ ] ¿Los botones tienen ancho controlado explícitamente?
+- [ ] ¿Los campos de texto tienen ancho controlado?
+- [ ] ¿Se usa `CrossAxisAlignment.stretch` sin necesidad?
+- [ ] ¿Los formularios tienen `maxWidth` en tablets/desktop?
+- [ ] ¿Hay padding/margin adecuado en los contenedores?
+- [ ] ¿Los elementos no se estiran de lado a lado sin control?
+
+## ⚠️ Excepciones
+
+Solo se permite estirar de lado a lado cuando:
+1. El usuario lo solicita EXPLÍCITAMENTE
+2. Es un diseño específico requerido (ej: header full-width)
+3. Es un contenedor de fondo que debe ocupar todo el ancho
+
+En estos casos, documentar por qué se hace la excepción.
+
+## 🎯 Objetivo
+
+**Mantener un diseño limpio, centrado y profesional.**
+**Evitar elementos estirados de forma no controlada.**
+**Crear interfaces que se vean bien en móvil, tablet y desktop.**
