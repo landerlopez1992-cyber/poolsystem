@@ -401,6 +401,28 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
     );
   }
 
+  String _buildSubscriptionSubtitle() {
+    if (_stats == null) return '';
+    
+    final monthly = _stats!['monthly_subscriptions'] ?? 0;
+    final lifetime = _stats!['lifetime_subscriptions'] ?? 0;
+    final active = _stats!['active_companies'] ?? 0;
+    
+    if (active == 0) {
+      return 'Sin empresas activas';
+    }
+    
+    final parts = <String>[];
+    if (monthly > 0) {
+      parts.add('$monthly mensual${monthly > 1 ? 'es' : ''}');
+    }
+    if (lifetime > 0) {
+      parts.add('$lifetime por vida');
+    }
+    
+    return parts.isEmpty ? '$active empresas' : parts.join(' + ');
+  }
+
   Widget _buildStatCard(String title, String value, IconData icon, Color color, {String? subtitle}) {
     return Card(
       color: Colors.white,

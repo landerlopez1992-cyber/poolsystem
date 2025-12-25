@@ -1,5 +1,11 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:typed_data';
+import 'dart:io';
+import 'package:http/http.dart' as http;
 import '../models/company_model.dart';
 import 'supabase_service.dart';
+import '../config/app_config.dart';
 
 class CompanyService {
   final _supabase = SupabaseService.client;
