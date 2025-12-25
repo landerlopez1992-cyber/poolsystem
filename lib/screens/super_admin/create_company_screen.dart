@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/company_service.dart';
 import '../../models/company_model.dart';
+import '../../widgets/super_admin_layout.dart';
 
 class CreateCompanyScreen extends StatefulWidget {
   final CompanyModel? company; // Si se proporciona, es edición
@@ -128,14 +129,16 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
     // Ancho máximo para el formulario (responsive)
     final maxWidth = MediaQuery.of(context).size.width > 600 ? 500.0 : double.infinity;
     
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      appBar: AppBar(
-        title: Text(widget.company == null ? 'Crear Empresa' : 'Editar Empresa'),
-        backgroundColor: const Color(0xFF37474F),
-        foregroundColor: Colors.white,
-      ),
-      body: Center(
+    return SuperAdminLayout(
+      title: widget.company == null ? 'Crear Empresa' : 'Editar Empresa',
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+          tooltip: 'Volver',
+        ),
+      ],
+      child: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: ConstrainedBox(

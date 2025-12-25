@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/company_model.dart';
 import '../../services/company_service.dart';
+import '../../widgets/super_admin_layout.dart';
 import 'create_company_screen.dart';
 
 class CompanyDetailScreen extends StatefulWidget {
@@ -39,29 +40,26 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      appBar: AppBar(
-        title: Text(widget.company.name),
-        backgroundColor: const Color(0xFF37474F),
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () async {
-              final result = await Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => CreateCompanyScreen(company: widget.company),
-                ),
-              );
-              if (result == true && mounted) {
-                Navigator.of(context).pop(true);
-              }
-            },
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
+    return SuperAdminLayout(
+      title: widget.company.name,
+      selectedIndex: 1, // Empresas
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.edit),
+          onPressed: () async {
+            final result = await Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => CreateCompanyScreen(company: widget.company),
+              ),
+            );
+            if (result == true && mounted) {
+              Navigator.of(context).pop(true);
+            }
+          },
+          tooltip: 'Editar',
+        ),
+      ],
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
