@@ -27,8 +27,6 @@ class _CreateAdminUserScreenState extends State<CreateAdminUserScreen> {
   bool _obscurePassword = true;
   XFile? _selectedAvatarFile;
   Uint8List? _selectedAvatarBytes;
-  String? _avatarUrl;
-  bool _isUploadingAvatar = false;
 
   @override
   void dispose() {
@@ -83,10 +81,6 @@ class _CreateAdminUserScreenState extends State<CreateAdminUserScreen> {
       // Si hay un avatar seleccionado, subirlo primero
       if (_selectedAvatarFile != null && _selectedAvatarBytes != null) {
         try {
-          setState(() {
-            _isUploadingAvatar = true;
-          });
-
           final fileName = 'avatar_${DateTime.now().millisecondsSinceEpoch}.jpg';
           final filePath = 'avatars/$fileName';
 
@@ -98,13 +92,7 @@ class _CreateAdminUserScreenState extends State<CreateAdminUserScreen> {
           );
 
           finalAvatarUrl = publicUrl;
-          setState(() {
-            _isUploadingAvatar = false;
-          });
         } catch (e) {
-          setState(() {
-            _isUploadingAvatar = false;
-          });
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Error al subir avatar: $e')),
