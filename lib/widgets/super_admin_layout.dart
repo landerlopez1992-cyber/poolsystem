@@ -27,30 +27,15 @@ class SuperAdminLayout extends StatelessWidget {
           SuperAdminSidebar(
             selectedIndex: selectedIndex ?? _getSelectedIndexFromTitle(title),
             onItemSelected: (index) {
+              // Si ya estamos en la pantalla correcta, no hacer nada
+              final currentIndex = selectedIndex ?? _getSelectedIndexFromTitle(title);
+              if (currentIndex == index) return;
+              
               // Navegar según el índice
-              switch (index) {
-                case 0:
-                  Navigator.of(context).pushNamedAndRemoveUntil(
-                    '/super-admin',
-                    (route) => false,
-                  );
-                  break;
-                case 1:
-                  // Ya estamos en empresas
-                  Navigator.of(context).pushNamedAndRemoveUntil(
-                    '/super-admin',
-                    (route) => false,
-                  );
-                  // Luego cambiar a la vista de empresas
-                  break;
-                case 2:
-                  // Navegar a soporte
-                  Navigator.of(context).pushNamedAndRemoveUntil(
-                    '/super-admin',
-                    (route) => false,
-                  );
-                  break;
-              }
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                '/super-admin',
+                (route) => false,
+              );
             },
           ),
           // Contenido principal
