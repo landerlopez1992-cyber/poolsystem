@@ -26,42 +26,47 @@ class SuperAdminLayout extends StatelessWidget {
       body: Row(
         children: [
           // Sidebar estático - siempre visible, NUNCA desaparece
-          SuperAdminSidebar(
-            selectedIndex: selectedIndex ?? _getSelectedIndexFromTitle(title),
-            onItemSelected: onItemSelected ?? (index) {
-              // Si ya estamos en la pantalla correcta, no hacer nada
-              final currentIndex = selectedIndex ?? _getSelectedIndexFromTitle(title);
-              if (currentIndex == index) return;
-              
-              // Navegar según el índice
-              Navigator.of(context).pushNamedAndRemoveUntil(
-                '/super-admin',
-                (route) => false,
-              );
-            },
+          // Usar Material para asegurar que los toques funcionen correctamente
+          Material(
+            child: SuperAdminSidebar(
+              selectedIndex: selectedIndex ?? _getSelectedIndexFromTitle(title),
+              onItemSelected: onItemSelected ?? (index) {
+                // Si ya estamos en la pantalla correcta, no hacer nada
+                final currentIndex = selectedIndex ?? _getSelectedIndexFromTitle(title);
+                if (currentIndex == index) return;
+                
+                // Navegar según el índice
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/super-admin',
+                  (route) => false,
+                );
+              },
+            ),
           ),
-          // Contenido principal
+          // Contenido principal - usar ClipRect para evitar que se desborde
           Expanded(
-            child: Column(
-              children: [
-                // AppBar
-                AppBar(
-                  title: Text(title),
-                  backgroundColor: const Color(0xFF37474F),
-                  foregroundColor: Colors.white,
-                  leading: actions == null || actions!.isEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.arrow_back),
-                          onPressed: () => Navigator.of(context).pop(),
-                        )
-                      : null,
-                  actions: actions,
-                ),
-                // Contenido
-                Expanded(
-                  child: child,
-                ),
-              ],
+            child: ClipRect(
+              child: Column(
+                children: [
+                  // AppBar
+                  AppBar(
+                    title: Text(title),
+                    backgroundColor: const Color(0xFF37474F),
+                    foregroundColor: Colors.white,
+                    leading: actions == null || actions!.isEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.arrow_back),
+                            onPressed: () => Navigator.of(context).pop(),
+                          )
+                        : null,
+                    actions: actions,
+                  ),
+                  // Contenido
+                  Expanded(
+                    child: child,
+                  ),
+                ],
+              ),
             ),
           ),
         ],
