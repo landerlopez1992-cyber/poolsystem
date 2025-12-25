@@ -115,17 +115,15 @@ class _EditWorkerScreenState extends State<EditWorkerScreen> {
 
           finalAvatarUrl = publicUrl;
           
-          // Actualizar avatar en la tabla users (solo si hay avatar)
-          if (finalAvatarUrl != null) {
-            try {
-              await _userService.updateUser(
-                userId: widget.worker.userId,
-                avatarUrl: finalAvatarUrl,
-              );
-            } catch (e) {
-              // Si falla actualizar el avatar en users, continuar con la actualización del worker
-              print('Advertencia: No se pudo actualizar avatar en users: $e');
-            }
+          // Actualizar avatar en la tabla users
+          try {
+            await _userService.updateUser(
+              userId: widget.worker.userId,
+              avatarUrl: finalAvatarUrl,
+            );
+          } catch (e) {
+            // Si falla actualizar el avatar en users, continuar con la actualización del worker
+            print('Advertencia: No se pudo actualizar avatar en users: $e');
           }
         } catch (e) {
           if (mounted) {
