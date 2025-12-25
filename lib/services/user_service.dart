@@ -87,20 +87,52 @@ class UserService {
   Future<UserModel?> getUserById(String userId) async {
     try {
       print('🔍 UserService.getUserById - Buscando usuario: $userId');
-      final response = await _supabase
-          .from('users')
-          .select()
-          .eq('id', userId)
-          .maybeSingle();
+      
+      // Intentar obtener directamente desde users
+      try {
+        final response = await _supabase
+            .from('users')
+            .select()
+            .eq('id', userId)
+            .maybeSingle();
 
-      if (response == null) {
-        print('⚠️ Usuario no encontrado en users table: $userId');
-        return null;
+        if (response != null) {
+          final user = UserModel.fromJson(response);
+          print('✅ Usuario encontrado: ${user.email}, Avatar: ${user.avatarUrl}');
+          return user;
+        }
+      } catch (e) {
+        print('⚠️ Error al obtener usuario directamente (puede ser RLS): $e');
+        // Si falla por RLS, intentar usar función RPC para obtener solo el avatar
+        try {
+          final avatarUrl = await _supabase.rpc(
+            'get_worker_avatar',
+            params: {'p_user_id': userId},
+          );
+          
+          if (avatarUrl != null) {
+            print('✅ Avatar obtenido mediante RPC: $avatarUrl');
+            // Crear un UserModel mínimo con el avatar
+            return UserModel(
+              id: userId,
+              email: '',
+              role: 'worker',
+              companyId: null,
+              fullName: null,
+              phone: null,
+              avatarUrl: avatarUrl as String?,
+              isActive: true,
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            );
+          }
+        } catch (rpcError) {
+          print('⚠️ Error al obtener avatar mediante RPC: $rpcError');
+        }
       }
-
-      final user = UserModel.fromJson(response);
-      print('✅ Usuario encontrado: ${user.email}, Avatar: ${user.avatarUrl}');
-      return user;
+      
+      print('⚠️ Usuario no encontrado en users table: $userId');
+      return null;
     } catch (e) {
       print('❌ Error al obtener usuario por ID: $e');
       return null;
