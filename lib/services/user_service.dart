@@ -235,18 +235,25 @@ class UserService {
         }
       }
 
-      print('💾 Ejecutando UPDATE en tabla users...');
-      final response = await _supabase
-          .from('users')
-          .update(data)
-          .eq('id', userId)
-          .select()
-          .single();
+      // Si existingUser existe, hacer UPDATE normal
+      if (existingUser != null) {
+        print('💾 Ejecutando UPDATE en tabla users...');
+        final response = await _supabase
+            .from('users')
+            .update(data)
+            .eq('id', userId)
+            .select()
+            .single();
 
-      print('✅ Usuario actualizado exitosamente');
-      print('   - Avatar URL guardada: ${response['avatar_url']}');
-      
-      return UserModel.fromJson(response);
+        print('✅ Usuario actualizado exitosamente');
+        print('   - Avatar URL guardada: ${response['avatar_url']}');
+        
+        return UserModel.fromJson(response);
+      } else {
+        // Si no existe, el código anterior ya intentó crearlo/actualizarlo
+        // Si llegamos aquí, significa que falló todo
+        throw Exception('No se pudo actualizar el usuario. El usuario no existe y no se pudo crear.');
+      }
     } catch (e) {
       print('❌ ERROR en UserService.updateUser: $e');
       throw Exception('Error al actualizar usuario: $e');
