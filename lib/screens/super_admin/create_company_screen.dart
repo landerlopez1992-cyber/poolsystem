@@ -63,6 +63,8 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
       // Leer bytes para vista previa
       final fileBytes = await pickedFile.readAsBytes();
 
+      if (!mounted) return;
+      
       setState(() {
         _selectedLogoFile = pickedFile;
         _selectedLogoBytes = fileBytes;
@@ -83,30 +85,34 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
             fileBytes: fileBytes,
           );
 
-          setState(() {
-            _logoUrl = publicUrl;
-            _isUploadingLogo = false;
-          });
-        } catch (e) {
-          setState(() {
-            _isUploadingLogo = false;
-          });
           if (mounted) {
+            setState(() {
+              _logoUrl = publicUrl;
+              _isUploadingLogo = false;
+            });
+          }
+        } catch (e) {
+          if (mounted) {
+            setState(() {
+              _isUploadingLogo = false;
+            });
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Error al subir logo: $e')),
             );
           }
         }
       } else {
+        if (mounted) {
+          setState(() {
+            _isUploadingLogo = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         setState(() {
           _isUploadingLogo = false;
         });
-      }
-    } catch (e) {
-      setState(() {
-        _isUploadingLogo = false;
-      });
-      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al seleccionar imagen: $e')),
         );
@@ -140,10 +146,12 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
 
       if (widget.company == null) {
         // Si hay un archivo nuevo, subirlo primero
-        if (_selectedLogoFile != null) {
-          setState(() {
-            _isUploadingLogo = true;
-          });
+        if (_selectedLogoFile != null && _selectedLogoBytes != null) {
+          if (mounted) {
+            setState(() {
+              _isUploadingLogo = true;
+            });
+          }
           try {
             // Crear empresa primero para obtener el ID
             final tempCompany = await _companyService.createCompany(
@@ -169,15 +177,13 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
             final fileName = 'logo_${tempCompany.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
             final filePath = 'company-logos/$fileName';
 
-            // Leer bytes del archivo
-            final fileBytes = await _selectedLogoFile!.readAsBytes();
-
+            // Usar bytes ya leídos
             // Subir usando helper (compatible con web y mobile)
             finalLogoUrl = await StorageHelper.uploadFile(
               supabase: _supabase,
               bucket: 'company-logos',
               filePath: filePath,
-              fileBytes: fileBytes,
+              fileBytes: _selectedLogoBytes!,
             );
 
             // Actualizar empresa con logo
@@ -210,9 +216,11 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
               }
             }
           } catch (e) {
-            setState(() {
-              _isUploadingLogo = false;
-            });
+            if (mounted) {
+              setState(() {
+                _isUploadingLogo = false;
+              });
+            }
             throw Exception('Error al crear empresa: $e');
           }
         } else {
@@ -240,10 +248,10 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
             subscriptionPrice: subscriptionPrice,
           );
         }
-        setState(() {
-          _isUploadingLogo = false;
-        });
         if (mounted) {
+          setState(() {
+            _isUploadingLogo = false;
+          });
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Empresa creada exitosamente')),
           );
@@ -252,28 +260,30 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
       } else {
         // Actualizar empresa existente
         // Si hay un archivo nuevo, subirlo primero
-        if (_selectedLogoFile != null && finalLogoUrl == null) {
-          setState(() {
-            _isUploadingLogo = true;
-          });
+        if (_selectedLogoFile != null && _selectedLogoBytes != null && finalLogoUrl == null) {
+          if (mounted) {
+            setState(() {
+              _isUploadingLogo = true;
+            });
+          }
           try {
             final fileName = 'logo_${widget.company!.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
             final filePath = 'company-logos/$fileName';
 
-            // Leer bytes del archivo
-            final fileBytes = await _selectedLogoFile!.readAsBytes();
-
+            // Usar bytes ya leídos
             // Subir usando helper (compatible con web y mobile)
             finalLogoUrl = await StorageHelper.uploadFile(
               supabase: _supabase,
               bucket: 'company-logos',
               filePath: filePath,
-              fileBytes: fileBytes,
+              fileBytes: _selectedLogoBytes!,
             );
           } catch (e) {
-            setState(() {
-              _isUploadingLogo = false;
-            });
+            if (mounted) {
+              setState(() {
+                _isUploadingLogo = false;
+              });
+            }
             throw Exception('Error al subir logo: $e');
           }
         }
@@ -297,10 +307,10 @@ class _CreateCompanyScreenState extends State<CreateCompanyScreen> {
           subscriptionType: _selectedSubscriptionType,
           subscriptionPrice: subscriptionPrice,
         );
-        setState(() {
-          _isUploadingLogo = false;
-        });
         if (mounted) {
+          setState(() {
+            _isUploadingLogo = false;
+          });
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Empresa actualizada exitosamente')),
           );
