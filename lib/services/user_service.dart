@@ -209,8 +209,8 @@ class UserService {
           throw Exception('Usuario no encontrado en la base de datos. userId: $userId. Error: $e');
         }
       } else {
-        print('   - Email: ${existingUser?.email}');
-        print('   - Role: ${existingUser?.role}');
+        print('   - Email: ${existingUser!.email}');
+        print('   - Role: ${existingUser.role}');
       }
 
       print('💾 Ejecutando UPDATE en tabla users...');
