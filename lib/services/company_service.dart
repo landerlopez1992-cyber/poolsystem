@@ -304,7 +304,7 @@ class CompanyService {
           .eq('role', 'admin');
       final totalAdmins = (adminUsers as List).length;
 
-      // 3. Total de limpiadores (workers)
+      // 3. Total de técnicos de piscinas (workers)
       final allWorkers = await _supabase
           .from('workers')
           .select('id');

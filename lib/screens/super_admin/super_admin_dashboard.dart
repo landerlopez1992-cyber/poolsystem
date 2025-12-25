@@ -161,7 +161,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                         const Color(0xFF2196F3),
                       ),
                       _buildStatCard(
-                        'Limpiadores de Pool',
+                        'Técnicos de Piscinas',
                         _stats!['total_workers'].toString(),
                         Icons.pool,
                         const Color(0xFFFF9800),

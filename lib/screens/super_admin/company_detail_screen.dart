@@ -299,7 +299,7 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            // Limpiadores de Pool (Workers)
+            // Técnicos de Piscinas (Workers)
             Card(
               color: Colors.white,
               child: Padding(
@@ -311,7 +311,7 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Limpiadores de Pool',
+                          'Técnicos de Piscinas',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -334,7 +334,7 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
                               _loadStats(); // Actualizar estadísticas
                             }
                           },
-                          tooltip: 'Crear Limpiador de Pool',
+                          tooltip: 'Crear Técnico de Piscinas',
                         ),
                       ],
                     ),
@@ -354,7 +354,7 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'No hay limpiadores de pool registrados',
+                                'No hay técnicos de piscinas registrados',
                                 style: TextStyle(
                                   color: Colors.grey[600],
                                   fontSize: 14,
