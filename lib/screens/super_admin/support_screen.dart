@@ -3,7 +3,6 @@ import '../../models/ticket_model.dart';
 import '../../models/company_model.dart';
 import '../../services/ticket_service.dart';
 import '../../services/company_service.dart';
-import '../../services/auth_service.dart';
 import 'create_ticket_screen.dart';
 import 'ticket_detail_screen.dart';
 
@@ -17,7 +16,6 @@ class SupportScreen extends StatefulWidget {
 class _SupportScreenState extends State<SupportScreen> {
   final _ticketService = TicketService();
   final _companyService = CompanyService();
-  final _authService = AuthService();
   
   List<TicketModel> _tickets = [];
   List<CompanyModel> _companies = [];
