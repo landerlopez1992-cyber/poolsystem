@@ -48,11 +48,17 @@ class AuthService {
           .from('users')
           .select()
           .eq('id', userId)
-          .single();
+          .maybeSingle(); // Cambiar a maybeSingle para manejar cuando no existe
+
+      if (response == null) {
+        return null; // Usuario no existe en tabla users
+      }
 
       return UserModel.fromJson(response);
     } catch (e) {
-      throw Exception('Error al obtener usuario: $e');
+      // Si hay error, retornar null en lugar de lanzar excepción
+      print('Error al obtener usuario: $e');
+      return null;
     }
   }
 
