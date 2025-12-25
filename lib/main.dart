@@ -35,7 +35,12 @@ class MyApp extends StatelessWidget {
           final index = args is int ? args : null;
           return SuperAdminDashboard(initialIndex: index);
         },
-        '/admin': (context) => const AdminDashboard(),
+        '/admin': (context) {
+          // Obtener el índice de los argumentos de la ruta
+          final args = ModalRoute.of(context)?.settings.arguments;
+          final index = args is int ? args : null;
+          return AdminDashboard(initialIndex: index);
+        },
         '/worker': (context) => const WorkerDashboard(),
       },
     );
