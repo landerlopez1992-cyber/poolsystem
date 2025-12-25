@@ -102,7 +102,7 @@ class UserService {
     }
   }
 
-  // Actualizar usuario
+  // Actualizar usuario (o crearlo si no existe)
   Future<UserModel> updateUser({
     required String userId,
     String? fullName,
@@ -124,20 +124,63 @@ class UserService {
       print('📝 Datos a actualizar: $data');
 
       // Verificar que el usuario existe antes de actualizar
-      final existingUser = await _supabase
+      var existingUser = await _supabase
           .from('users')
-          .select('id, email, role')
+          .select('id, email, role, company_id')
           .eq('id', userId)
           .maybeSingle();
 
-      print('🔍 Usuario existente: ${existingUser != null ? "SÍ" : "NO"}');
-      if (existingUser != null) {
+      print('🔍 Usuario existente en public.users: ${existingUser != null ? "SÍ" : "NO"}');
+      
+      // Si el usuario no existe en public.users, verificar si existe en auth.users y crearlo
+      if (existingUser == null) {
+        print('⚠️ Usuario no encontrado en public.users, verificando auth.users...');
+        
+        try {
+          // Intentar obtener el usuario de auth.users
+          final authUser = _supabase.auth.admin.getUserById(userId);
+          // Nota: admin.getUserById requiere permisos de servicio, así que usaremos otro método
+          
+          // Buscar en workers para obtener información del usuario
+          final workerData = await _supabase
+              .from('workers')
+              .select('company_id, email, full_name')
+              .eq('user_id', userId)
+              .maybeSingle();
+          
+          if (workerData != null) {
+            print('✅ Worker encontrado, creando usuario en public.users...');
+            print('   - Email del worker: ${workerData['email']}');
+            print('   - Company ID: ${workerData['company_id']}');
+            
+            // Crear el usuario en public.users con los datos del worker
+            final newUser = await _supabase
+                .from('users')
+                .insert({
+                  'id': userId,
+                  'email': workerData['email'] ?? '',
+                  'full_name': workerData['full_name'] ?? fullName ?? '',
+                  'role': 'worker',
+                  'company_id': workerData['company_id'],
+                  'phone': phone,
+                  'avatar_url': avatarUrl,
+                  'is_active': isActive ?? true,
+                })
+                .select()
+                .single();
+            
+            print('✅ Usuario creado exitosamente en public.users');
+            existingUser = newUser;
+          } else {
+            throw Exception('Usuario no encontrado en la base de datos ni en workers. userId: $userId');
+          }
+        } catch (e) {
+          print('❌ Error al crear usuario: $e');
+          throw Exception('Usuario no encontrado en la base de datos. userId: $userId. Error: $e');
+        }
+      } else {
         print('   - Email: ${existingUser['email']}');
         print('   - Role: ${existingUser['role']}');
-      }
-
-      if (existingUser == null) {
-        throw Exception('Usuario no encontrado en la base de datos. userId: $userId');
       }
 
       print('💾 Ejecutando UPDATE en tabla users...');
