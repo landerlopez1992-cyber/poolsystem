@@ -62,6 +62,7 @@ class WorkerService {
     String? phone,
     String? specialization,
     String? licenseNumber,
+    String? avatarUrl,
   }) async {
     try {
       // 1. Crear usuario en auth
@@ -84,6 +85,7 @@ class WorkerService {
         'role': 'worker',
         'company_id': companyId,
         'phone': phone,
+        'avatar_url': avatarUrl,
         'is_active': true,
       });
 

@@ -27,6 +27,7 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
   Map<String, dynamic>? _stats;
   List<UserModel> _adminUsers = [];
   List<WorkerModel> _workers = [];
+  List<UserModel> _workerUsers = []; // Usuarios asociados a workers para obtener avatares
   
   bool _isLoadingStats = true;
   bool _isLoadingEmployees = true;
@@ -77,6 +78,18 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
     });
     try {
       final workers = await _workerService.getWorkersByCompany(widget.company.id);
+      
+      // Cargar usuarios asociados a los workers para obtener avatares
+      final workerUserIds = workers.map((w) => w.userId).toList();
+      if (workerUserIds.isNotEmpty) {
+        try {
+          final workerUsers = await _userService.getUsersByCompany(widget.company.id);
+          _workerUsers = workerUsers.where((u) => u.role == 'worker').toList();
+        } catch (e) {
+          // Error silencioso
+        }
+      }
+      
       setState(() {
         _workers = workers;
         _isLoadingWorkers = false;
@@ -624,12 +637,17 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: const Color(0xFF37474F),
-          child: Text(
-            (user.fullName?.isNotEmpty ?? false)
-                ? user.fullName![0].toUpperCase()
-                : user.email[0].toUpperCase(),
-            style: const TextStyle(color: Colors.white),
-          ),
+          backgroundImage: user.avatarUrl != null
+              ? NetworkImage(user.avatarUrl!)
+              : null,
+          child: user.avatarUrl == null
+              ? Text(
+                  (user.fullName?.isNotEmpty ?? false)
+                      ? user.fullName![0].toUpperCase()
+                      : user.email[0].toUpperCase(),
+                  style: const TextStyle(color: Colors.white),
+                )
+              : null,
         ),
         title: Text(
           user.fullName ?? user.email,
@@ -675,13 +693,30 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
   }
 
   Widget _buildWorkerCard(WorkerModel worker) {
+    // Obtener avatar del usuario asociado si existe
+    final workerUser = _workerUsers.firstWhere(
+      (u) => u.id == worker.userId,
+      orElse: () => UserModel(
+        id: worker.userId,
+        email: worker.email ?? '',
+        role: 'worker',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+    );
+
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       color: Colors.grey[50],
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: const Color(0xFF4CAF50),
-          child: const Icon(Icons.pool, color: Colors.white, size: 20),
+          backgroundImage: workerUser.avatarUrl != null && workerUser.avatarUrl!.isNotEmpty
+              ? NetworkImage(workerUser.avatarUrl!)
+              : null,
+          child: workerUser.avatarUrl == null || workerUser.avatarUrl!.isEmpty
+              ? const Icon(Icons.pool, color: Colors.white, size: 20)
+              : null,
         ),
         title: Text(
           worker.fullName,

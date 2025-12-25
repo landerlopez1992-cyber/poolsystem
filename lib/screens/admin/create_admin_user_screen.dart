@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:typed_data';
 import '../../services/user_service.dart';
 import '../../widgets/super_admin_layout.dart';
+import '../../services/supabase_service.dart';
+import '../../utils/storage_helper.dart';
 
 class CreateAdminUserScreen extends StatefulWidget {
   final String companyId;
@@ -18,8 +22,13 @@ class _CreateAdminUserScreenState extends State<CreateAdminUserScreen> {
   final _passwordController = TextEditingController();
   final _phoneController = TextEditingController();
   final _userService = UserService();
+  final _supabase = SupabaseService.client;
   bool _isLoading = false;
   bool _obscurePassword = true;
+  XFile? _selectedAvatarFile;
+  Uint8List? _selectedAvatarBytes;
+  String? _avatarUrl;
+  bool _isUploadingAvatar = false;
 
   @override
   void dispose() {
@@ -28,6 +37,35 @@ class _CreateAdminUserScreenState extends State<CreateAdminUserScreen> {
     _passwordController.dispose();
     _phoneController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickAvatar() async {
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+
+      if (pickedFile == null) return;
+
+      final fileBytes = await pickedFile.readAsBytes();
+
+      if (!mounted) return;
+      
+      setState(() {
+        _selectedAvatarFile = pickedFile;
+        _selectedAvatarBytes = fileBytes;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al seleccionar imagen: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _saveAdminUser() async {
@@ -40,6 +78,45 @@ class _CreateAdminUserScreenState extends State<CreateAdminUserScreen> {
     });
 
     try {
+      String? finalAvatarUrl;
+
+      // Si hay un avatar seleccionado, subirlo primero
+      if (_selectedAvatarFile != null && _selectedAvatarBytes != null) {
+        try {
+          setState(() {
+            _isUploadingAvatar = true;
+          });
+
+          final fileName = 'avatar_${DateTime.now().millisecondsSinceEpoch}.jpg';
+          final filePath = 'avatars/$fileName';
+
+          final publicUrl = await StorageHelper.uploadFile(
+            supabase: _supabase,
+            bucket: 'avatars',
+            filePath: filePath,
+            fileBytes: _selectedAvatarBytes!,
+          );
+
+          finalAvatarUrl = publicUrl;
+          setState(() {
+            _isUploadingAvatar = false;
+          });
+        } catch (e) {
+          setState(() {
+            _isUploadingAvatar = false;
+          });
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error al subir avatar: $e')),
+            );
+          }
+          setState(() {
+            _isLoading = false;
+          });
+          return;
+        }
+      }
+
       await _userService.createAdminUser(
         companyId: widget.companyId,
         email: _emailController.text.trim(),
@@ -48,6 +125,7 @@ class _CreateAdminUserScreenState extends State<CreateAdminUserScreen> {
         phone: _phoneController.text.trim().isEmpty
             ? null
             : _phoneController.text.trim(),
+        avatarUrl: finalAvatarUrl,
       );
 
       if (mounted) {
@@ -109,6 +187,55 @@ class _CreateAdminUserScreenState extends State<CreateAdminUserScreen> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
+                          // Selector de Avatar
+                          Center(
+                            child: GestureDetector(
+                              onTap: _pickAvatar,
+                              child: Stack(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 50,
+                                    backgroundColor: Colors.grey[300],
+                                    backgroundImage: _selectedAvatarBytes != null
+                                        ? MemoryImage(_selectedAvatarBytes!)
+                                        : null,
+                                    child: _selectedAvatarBytes == null
+                                        ? const Icon(
+                                            Icons.person,
+                                            size: 50,
+                                            color: Colors.grey,
+                                          )
+                                        : null,
+                                  ),
+                                  Positioned(
+                                    bottom: 0,
+                                    right: 0,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFFFF9800),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.camera_alt,
+                                        size: 20,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Foto de Perfil',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
                           SizedBox(
                             width: double.infinity,
                             child: TextFormField(

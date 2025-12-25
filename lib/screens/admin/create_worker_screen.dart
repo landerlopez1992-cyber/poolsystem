@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:typed_data';
 import '../../services/worker_service.dart';
 import '../../widgets/super_admin_layout.dart';
+import '../../services/supabase_service.dart';
+import '../../utils/storage_helper.dart';
 
 class CreateWorkerScreen extends StatefulWidget {
   final String companyId;
@@ -20,8 +24,13 @@ class _CreateWorkerScreenState extends State<CreateWorkerScreen> {
   final _specializationController = TextEditingController();
   final _licenseController = TextEditingController();
   final _workerService = WorkerService();
+  final _supabase = SupabaseService.client;
   bool _isLoading = false;
   bool _obscurePassword = true;
+  XFile? _selectedAvatarFile;
+  Uint8List? _selectedAvatarBytes;
+  String? _avatarUrl;
+  bool _isUploadingAvatar = false;
 
   @override
   void dispose() {
@@ -34,6 +43,35 @@ class _CreateWorkerScreenState extends State<CreateWorkerScreen> {
     super.dispose();
   }
 
+  Future<void> _pickAvatar() async {
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+
+      if (pickedFile == null) return;
+
+      final fileBytes = await pickedFile.readAsBytes();
+
+      if (!mounted) return;
+      
+      setState(() {
+        _selectedAvatarFile = pickedFile;
+        _selectedAvatarBytes = fileBytes;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al seleccionar imagen: $e')),
+        );
+      }
+    }
+  }
+
   Future<void> _saveWorker() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -44,6 +82,45 @@ class _CreateWorkerScreenState extends State<CreateWorkerScreen> {
     });
 
     try {
+      String? finalAvatarUrl;
+
+      // Si hay un avatar seleccionado, subirlo primero
+      if (_selectedAvatarFile != null && _selectedAvatarBytes != null) {
+        try {
+          setState(() {
+            _isUploadingAvatar = true;
+          });
+
+          final fileName = 'avatar_${DateTime.now().millisecondsSinceEpoch}.jpg';
+          final filePath = 'avatars/$fileName';
+
+          final publicUrl = await StorageHelper.uploadFile(
+            supabase: _supabase,
+            bucket: 'avatars',
+            filePath: filePath,
+            fileBytes: _selectedAvatarBytes!,
+          );
+
+          finalAvatarUrl = publicUrl;
+          setState(() {
+            _isUploadingAvatar = false;
+          });
+        } catch (e) {
+          setState(() {
+            _isUploadingAvatar = false;
+          });
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error al subir avatar: $e')),
+            );
+          }
+          setState(() {
+            _isLoading = false;
+          });
+          return;
+        }
+      }
+
       await _workerService.createWorker(
         companyId: widget.companyId,
         email: _emailController.text.trim(),
@@ -58,6 +135,7 @@ class _CreateWorkerScreenState extends State<CreateWorkerScreen> {
         licenseNumber: _licenseController.text.trim().isEmpty
             ? null
             : _licenseController.text.trim(),
+        avatarUrl: finalAvatarUrl,
       );
 
       if (mounted) {

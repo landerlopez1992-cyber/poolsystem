@@ -11,6 +11,7 @@ class UserService {
     required String password,
     required String fullName,
     String? phone,
+    String? avatarUrl,
   }) async {
     try {
       // 1. Crear usuario en auth
@@ -35,6 +36,7 @@ class UserService {
             'role': 'admin',
             'company_id': companyId,
             'phone': phone,
+            'avatar_url': avatarUrl,
             'is_active': true,
           })
           .select()
